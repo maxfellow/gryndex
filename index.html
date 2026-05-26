@@ -1160,6 +1160,7 @@ const WK={
   legs:[{n:"Back Squat",s:"4",r:"6–8 reps",rest:"120s"},{n:"Romanian Deadlift",s:"3",r:"10–12 reps",rest:"90s"},{n:"Leg Press",s:"3",r:"12–15 reps",rest:"75s"},{n:"Calf Raise",s:"4",r:"15–20 reps",rest:"45s"}],
   arms:[{n:"Barbell Curl",s:"4",r:"8–10 reps",rest:"75s"},{n:"Skull Crusher",s:"3",r:"10–12 reps",rest:"75s"},{n:"Hammer Curl",s:"3",r:"12–14 reps",rest:"60s"},{n:"Tricep Pushdown",s:"3",r:"12–15 reps",rest:"60s"}],
   shoulders:[{n:"Overhead Press",s:"4",r:"8–10 reps",rest:"90s"},{n:"Lateral Raise",s:"3",r:"12–15 reps",rest:"60s"},{n:"Front Raise",s:"3",r:"12–15 reps",rest:"60s"},{n:"Rear Delt Fly",s:"3",r:"15 reps",rest:"45s"}],
+  core:[{n:"Plank",s:"3",r:"60 seconds",rest:"45s"},{n:"Hanging Leg Raise",s:"3",r:"12–15 reps",rest:"60s"},{n:"Cable Crunch",s:"3",r:"15–20 reps",rest:"45s"},{n:"Ab Wheel Rollout",s:"3",r:"10–12 reps",rest:"60s"}],
 };
 function renderWK(tab){
   const l=document.getElementById('exList');l.innerHTML='';
@@ -1296,6 +1297,568 @@ document.addEventListener('keydown',e=>{
     document.body.style.overflow='';
   }
 });
+</script>
+
+<!-- SUPABASE SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<!-- DASHBOARD HTML -->
+<div id="dashboard" style="display:none">
+<style>
+/* ══ DASHBOARD ══ */
+.db-wrap{display:flex;min-height:100vh;background:var(--bg)}
+.db-side{width:220px;flex-shrink:0;background:var(--s1);border-right:1px solid var(--br);display:flex;flex-direction:column;padding:1.2rem 0;position:fixed;top:0;bottom:0;left:0;z-index:100}
+.db-logo{font-family:'Outfit',sans-serif;font-weight:700;font-size:1.1rem;letter-spacing:.04em;padding:.8rem 1.4rem 1.2rem;border-bottom:1px solid var(--br)}
+.db-logo em{background:var(--limeg);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-style:normal}
+.db-nav{flex:1;padding:.8rem 0;display:flex;flex-direction:column;gap:.15rem}
+.db-nav-item{display:flex;align-items:center;gap:.7rem;padding:.62rem 1.4rem;font-size:.82rem;font-weight:500;color:var(--g2);cursor:pointer;transition:all .2s;border-left:2px solid transparent;margin:0 .5rem;border-radius:0 8px 8px 0}
+.db-nav-item:hover{color:var(--w);background:var(--s2)}
+.db-nav-item.act{color:var(--lime);background:var(--limea);border-left-color:var(--lime)}
+.db-nav-item svg{flex-shrink:0;opacity:.7}
+.db-nav-item.act svg{opacity:1}
+.db-user{padding:1rem 1.4rem;border-top:1px solid var(--br);display:flex;align-items:center;gap:.7rem}
+.db-av{width:34px;height:34px;border-radius:50%;background:var(--limeg);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;color:#0c0c0c;flex-shrink:0;font-family:'Outfit',sans-serif}
+.db-uname{font-size:.78rem;font-weight:600;color:var(--w);line-height:1.3}
+.db-uemail{font-size:.62rem;color:var(--g2)}
+.db-logout{background:transparent;border:none;color:var(--g2);cursor:pointer;padding:.2rem;transition:color .2s;margin-left:auto;flex-shrink:0}
+.db-logout:hover{color:var(--red)}
+.db-main{margin-left:220px;flex:1;padding:2rem 2.5rem;min-height:100vh}
+.db-topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem}
+.db-page-title{font-family:'Outfit',sans-serif;font-weight:800;font-size:1.5rem;letter-spacing:-.02em}
+.db-date{font-size:.75rem;color:var(--g2)}
+
+/* Cards */
+.db-card{background:var(--s1);border:1px solid var(--br);border-radius:14px;padding:1.4rem}
+.db-card-title{font-size:.62rem;font-weight:700;color:var(--g2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.8rem}
+
+/* Stat grid */
+.db-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-bottom:1.5rem}
+.db-stat{background:var(--s1);border:1px solid var(--br);border-radius:12px;padding:1rem 1.2rem;transition:border-color .2s}
+.db-stat:hover{border-color:var(--br2)}
+.db-stat-num{font-family:'Outfit',sans-serif;font-weight:800;font-size:1.8rem;letter-spacing:-.03em;background:var(--limeg);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;margin-bottom:.2rem}
+.db-stat-label{font-size:.65rem;color:var(--g2);text-transform:uppercase;letter-spacing:.08em}
+
+/* Grid 2 col */
+.db-grid2{display:grid;grid-template-columns:1.2fr 1fr;gap:.75rem;margin-bottom:1.5rem}
+
+/* Workout list */
+.db-ex{display:flex;align-items:center;gap:.8rem;padding:.7rem .9rem;background:var(--s2);border:1px solid var(--br);border-radius:10px;margin-bottom:.45rem;cursor:pointer;transition:all .2s}
+.db-ex:hover{border-color:rgba(200,255,0,.25);background:var(--s3)}
+.db-ex-num{font-family:'Outfit',sans-serif;font-weight:800;font-size:1rem;color:var(--g2);width:22px;flex-shrink:0}
+.db-ex-name{font-size:.82rem;font-weight:600;flex:1}
+.db-ex-meta{font-size:.65rem;color:var(--g2)}
+.db-ex-sets{font-family:'Outfit',sans-serif;font-weight:800;font-size:1.2rem;background:var(--limeg);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+
+/* AI Chat */
+.db-chat-body{height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:.6rem;padding:.5rem 0;margin-bottom:.8rem}
+.db-chat-body::-webkit-scrollbar{width:2px}
+.db-bubble{max-width:82%;padding:.6rem .85rem;border-radius:10px;font-size:.78rem;line-height:1.6}
+.db-bubble.ai{background:var(--s3);border:1px solid var(--br);border-radius:10px 10px 10px 2px;align-self:flex-start;color:var(--g1)}
+.db-bubble.me{background:var(--limeg);color:#0c0c0c;border-radius:10px 10px 2px 10px;align-self:flex-end;font-weight:600}
+.db-ty{padding:.7rem .9rem}.db-ty-dots{display:flex;gap:3px}
+.db-ty-dots span{width:5px;height:5px;border-radius:50%;background:var(--g2);animation:tdot 1.1s infinite}
+.db-ty-dots span:nth-child(2){animation-delay:.18s}.db-ty-dots span:nth-child(3){animation-delay:.36s}
+.db-chat-inp-row{display:flex;gap:.5rem}
+.db-chat-inp{flex:1;background:var(--s2);border:1px solid var(--br2);border-radius:8px;padding:.55rem .9rem;font-size:.78rem;color:var(--w);outline:none;transition:border-color .2s;font-family:'Space Grotesk',sans-serif}
+.db-chat-inp:focus{border-color:rgba(200,255,0,.4)}
+.db-chat-inp::placeholder{color:var(--g2)}
+.db-send{width:36px;height:36px;background:var(--limeg);border:none;border-radius:8px;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.db-send:hover{filter:brightness(1.1)}
+
+/* Progress bars */
+.db-prog-row{display:flex;align-items:center;gap:.7rem;margin-bottom:.6rem}
+.db-prog-name{font-size:.72rem;color:var(--g1);width:80px;flex-shrink:0;font-weight:500}
+.db-prog-track{flex:1;height:5px;background:var(--s4);border-radius:100px;overflow:hidden}
+.db-prog-fill{height:100%;border-radius:100px;background:var(--limeg)}
+.db-prog-val{font-size:.68rem;font-weight:700;color:var(--lime);width:32px;text-align:right}
+
+/* Workout tabs */
+.db-tabs{display:flex;gap:.4rem;margin-bottom:1rem;flex-wrap:wrap}
+.db-tab{font-size:.7rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:.38rem .85rem;border-radius:6px;border:1px solid var(--br2);background:transparent;color:var(--g2);transition:all .2s}
+.db-tab.on{background:var(--limeg);color:#0c0c0c;border-color:transparent}
+
+/* Profile form */
+.db-form-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.75rem}
+.db-field{display:flex;flex-direction:column;gap:.3rem}
+.db-label{font-size:.62rem;font-weight:700;color:var(--g2);text-transform:uppercase;letter-spacing:.08em}
+.db-input{background:var(--s2);border:1px solid var(--br2);border-radius:8px;padding:.6rem .9rem;font-size:.82rem;color:var(--w);outline:none;transition:border-color .2s;font-family:'Space Grotesk',sans-serif;width:100%}
+.db-input:focus{border-color:rgba(200,255,0,.4)}
+.db-select{background:var(--s2);border:1px solid var(--br2);border-radius:8px;padding:.6rem .9rem;font-size:.82rem;color:var(--w);outline:none;width:100%;font-family:'Space Grotesk',sans-serif;cursor:pointer}
+.db-save-btn{background:var(--limeg);border:none;padding:.75rem 2rem;border-radius:8px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.82rem;color:#0c0c0c;cursor:pointer;transition:all .2s;letter-spacing:.04em;text-transform:uppercase;margin-top:.5rem}
+.db-save-btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.db-success-msg{color:var(--lime);font-size:.75rem;margin-top:.5rem;display:none}
+
+/* Plan badge */
+.plan-badge{display:inline-flex;align-items:center;gap:.4rem;background:var(--limea);border:1px solid rgba(200,255,0,.25);border-radius:6px;padding:.28rem .7rem;font-size:.65rem;font-weight:700;color:var(--lime);letter-spacing:.08em;text-transform:uppercase}
+
+/* Upgrade card */
+.upgrade-card{background:var(--limeg);border-radius:14px;padding:1.5rem;display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:1.5rem}
+.uc-title{font-family:'Outfit',sans-serif;font-weight:800;font-size:1.1rem;color:#0c0c0c;letter-spacing:-.01em;margin-bottom:.25rem}
+.uc-sub{font-size:.75rem;color:rgba(0,0,0,.6)}
+.uc-btn{background:#0c0c0c;color:var(--lime);border:none;padding:.7rem 1.5rem;border-radius:8px;font-weight:800;font-size:.78rem;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;white-space:nowrap;transition:all .2s;flex-shrink:0}
+.uc-btn:hover{background:#1a1a1a}
+
+/* Page sections */
+.db-page{display:none}
+.db-page.show{display:block}
+
+@media(max-width:768px){
+  .db-side{width:60px;padding:.8rem 0}
+  .db-logo{display:none}
+  .db-nav-item span{display:none}
+  .db-nav-item{justify-content:center;padding:.7rem}
+  .db-uname,.db-uemail{display:none}
+  .db-main{margin-left:60px;padding:1.2rem}
+  .db-stats{grid-template-columns:repeat(2,1fr)}
+  .db-grid2{grid-template-columns:1fr}
+}
+</style>
+
+<div class="db-wrap">
+  <!-- SIDEBAR -->
+  <div class="db-side">
+    <div class="db-logo">GRYN<em>D</em>EX</div>
+    <div class="db-nav">
+      <div class="db-nav-item act" onclick="dbPage('home')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+        <span>Home</span>
+      </div>
+      <div class="db-nav-item" onclick="dbPage('workout')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5h11M6.5 17.5h11M3 12h18"/></svg>
+        <span>Workout</span>
+      </div>
+      <div class="db-nav-item" onclick="dbPage('coach')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        <span>AI Coach</span>
+      </div>
+      <div class="db-nav-item" onclick="dbPage('progress')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>
+        <span>Progress</span>
+      </div>
+      <div class="db-nav-item" onclick="dbPage('profile')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        <span>Profile</span>
+      </div>
+    </div>
+    <div class="db-user">
+      <div class="db-av" id="dbAv">?</div>
+      <div><div class="db-uname" id="dbUname">Loading...</div><div class="db-uemail" id="dbUemail"></div></div>
+      <button class="db-logout" onclick="doLogout()" title="Log out">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="db-main">
+
+    <!-- HOME PAGE -->
+    <div class="db-page show" id="pg-home">
+      <div class="db-topbar">
+        <div>
+          <div class="db-page-title" id="dbGreeting">Good morning!</div>
+          <div class="db-date" id="dbDate"></div>
+        </div>
+        <div class="plan-badge" id="planBadge">Free Plan</div>
+      </div>
+
+      <!-- Upgrade banner (free users) -->
+      <div class="upgrade-card" id="upgradeBanner">
+        <div>
+          <div class="uc-title">Unlock full GRYNDEX — ₹499/month</div>
+          <div class="uc-sub">Unlimited AI plans, diet coach, progress analytics & more</div>
+        </div>
+        <button class="uc-btn" onclick="window.open('https://gumroad.com','_blank')">Upgrade to Pro</button>
+      </div>
+
+      <!-- Stats -->
+      <div class="db-stats">
+        <div class="db-stat"><div class="db-stat-num" id="statStreak">0</div><div class="db-stat-label">Day Streak</div></div>
+        <div class="db-stat"><div class="db-stat-num" id="statSessions">0</div><div class="db-stat-label">Sessions Done</div></div>
+        <div class="db-stat"><div class="db-stat-num">₹0</div><div class="db-stat-label">Saved vs Trainer</div></div>
+        <div class="db-stat"><div class="db-stat-num">24/7</div><div class="db-stat-label">AI Online</div></div>
+      </div>
+
+      <!-- Today workout + quick chat -->
+      <div class="db-grid2">
+        <div class="db-card">
+          <div class="db-card-title">Today's Workout</div>
+          <div id="homeWorkout"></div>
+          <button class="db-save-btn" style="margin-top:.8rem;width:100%" onclick="dbPage('workout')">Open Full Planner</button>
+        </div>
+        <div class="db-card">
+          <div class="db-card-title">Quick Ask — AI Coach</div>
+          <div class="db-chat-body" id="homeChatBody">
+            <div class="db-bubble ai" id="homeWelcomeMsg">Hey! Ready to train today? Ask me anything.</div>
+          </div>
+          <div class="db-chat-inp-row">
+            <input class="db-chat-inp" id="homeInp" placeholder="Ask coach..." />
+            <button class="db-send" onclick="homeChat()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0c0c0c" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WORKOUT PAGE -->
+    <div class="db-page" id="pg-workout">
+      <div class="db-topbar">
+        <div class="db-page-title">Workout Planner</div>
+      </div>
+      <div class="db-card">
+        <div class="db-tabs" id="wkTabs">
+          <button class="db-tab on" data-m="chest">Chest</button>
+          <button class="db-tab" data-m="back">Back</button>
+          <button class="db-tab" data-m="legs">Legs</button>
+          <button class="db-tab" data-m="arms">Arms</button>
+          <button class="db-tab" data-m="shoulders">Shoulders</button>
+          <button class="db-tab" data-m="core">Core</button>
+        </div>
+        <div id="wkList"></div>
+      </div>
+    </div>
+
+    <!-- AI COACH PAGE -->
+    <div class="db-page" id="pg-coach">
+      <div class="db-topbar">
+        <div class="db-page-title">AI Coach</div>
+        <div style="display:flex;align-items:center;gap:.4rem;font-size:.72rem;color:var(--lime)">
+          <div style="width:6px;height:6px;border-radius:50%;background:var(--lime);animation:blink 1.3s infinite"></div>
+          Always online
+        </div>
+      </div>
+      <div class="db-card" style="height:calc(100vh - 160px);display:flex;flex-direction:column">
+        <div class="db-chat-body" id="coachChatBody" style="flex:1;height:auto">
+          <div class="db-bubble ai">Your personal AI coach is ready. I know your goals, your plan, and your progress. What do you want to work on today?</div>
+        </div>
+        <div style="padding-top:.8rem;border-top:1px solid var(--br)">
+          <div class="db-chat-inp-row" style="margin-bottom:.6rem">
+            <input class="db-chat-inp" id="coachInp" placeholder="Ask anything — nutrition, form, recovery, planning..." />
+            <button class="db-send" onclick="coachChat()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0c0c0c" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/></svg>
+            </button>
+          </div>
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+            <button class="db-tab" style="font-size:.62rem;padding:.28rem .65rem" onclick="quickCoach(this.textContent)">Pre-workout meal?</button>
+            <button class="db-tab" style="font-size:.62rem;padding:.28rem .65rem" onclick="quickCoach(this.textContent)">Fix my bench press form</button>
+            <button class="db-tab" style="font-size:.62rem;padding:.28rem .65rem" onclick="quickCoach(this.textContent)">How much protein daily?</button>
+            <button class="db-tab" style="font-size:.62rem;padding:.28rem .65rem" onclick="quickCoach(this.textContent)">Build me a 7-day plan</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROGRESS PAGE -->
+    <div class="db-page" id="pg-progress">
+      <div class="db-topbar"><div class="db-page-title">Your Progress</div></div>
+      <div class="db-stats" style="margin-bottom:1.5rem">
+        <div class="db-stat"><div class="db-stat-num" id="prStreak">0</div><div class="db-stat-label">Day Streak</div></div>
+        <div class="db-stat"><div class="db-stat-num" id="prSessions">0</div><div class="db-stat-label">Total Sessions</div></div>
+        <div class="db-stat"><div class="db-stat-num">91%</div><div class="db-stat-label">Consistency</div></div>
+        <div class="db-stat"><div class="db-stat-num">+14%</div><div class="db-stat-label">Strength Gain</div></div>
+      </div>
+      <div class="db-grid2">
+        <div class="db-card">
+          <div class="db-card-title">Strength Progress</div>
+          <div class="db-prog-row"><div class="db-prog-name">Chest</div><div class="db-prog-track"><div class="db-prog-fill" style="width:82%"></div></div><div class="db-prog-val">82%</div></div>
+          <div class="db-prog-row"><div class="db-prog-name">Back</div><div class="db-prog-track"><div class="db-prog-fill" style="width:74%"></div></div><div class="db-prog-val">74%</div></div>
+          <div class="db-prog-row"><div class="db-prog-name">Legs</div><div class="db-prog-track"><div class="db-prog-fill" style="width:68%"></div></div><div class="db-prog-val">68%</div></div>
+          <div class="db-prog-row"><div class="db-prog-name">Arms</div><div class="db-prog-track"><div class="db-prog-fill" style="width:91%"></div></div><div class="db-prog-val">91%</div></div>
+          <div class="db-prog-row"><div class="db-prog-name">Shoulders</div><div class="db-prog-track"><div class="db-prog-fill" style="width:60%"></div></div><div class="db-prog-val">60%</div></div>
+        </div>
+        <div class="db-card">
+          <div class="db-card-title">Weekly Activity</div>
+          <div style="display:flex;align-items:flex-end;gap:6px;height:100px;margin-bottom:.5rem">
+            <div style="flex:1;background:var(--s4);border-radius:4px 4px 0 0;height:45%"></div>
+            <div style="flex:1;background:var(--lime);border-radius:4px 4px 0 0;height:80%"></div>
+            <div style="flex:1;background:var(--s4);border-radius:4px 4px 0 0;height:55%"></div>
+            <div style="flex:1;background:var(--s4);border-radius:4px 4px 0 0;height:70%"></div>
+            <div style="flex:1;background:var(--s4);border-radius:4px 4px 0 0;height:30%"></div>
+            <div style="flex:1;background:var(--s4);border-radius:4px 4px 0 0;height:50%"></div>
+            <div style="flex:1;background:rgba(200,255,0,.35);border-radius:4px 4px 0 0;height:65%"></div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <div style="flex:1;font-size:.5rem;color:var(--g2);text-align:center">M</div>
+            <div style="flex:1;font-size:.5rem;color:var(--lime);text-align:center">T</div>
+            <div style="flex:1;font-size:.5rem;color:var(--g2);text-align:center">W</div>
+            <div style="flex:1;font-size:.5rem;color:var(--g2);text-align:center">T</div>
+            <div style="flex:1;font-size:.5rem;color:var(--g2);text-align:center">F</div>
+            <div style="flex:1;font-size:.5rem;color:var(--g2);text-align:center">S</div>
+            <div style="flex:1;font-size:.5rem;color:var(--g2);text-align:center">S</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROFILE PAGE -->
+    <div class="db-page" id="pg-profile">
+      <div class="db-topbar"><div class="db-page-title">My Profile</div></div>
+      <div class="db-card" style="max-width:560px">
+        <div class="db-card-title">Personal Details</div>
+        <div class="db-form-row">
+          <div class="db-field"><div class="db-label">First Name</div><input class="db-input" id="pFirst" placeholder="Arjun" /></div>
+          <div class="db-field"><div class="db-label">Last Name</div><input class="db-input" id="pLast" placeholder="Kapoor" /></div>
+        </div>
+        <div class="db-form-row">
+          <div class="db-field"><div class="db-label">Weight (kg)</div><input class="db-input" id="pWeight" type="number" placeholder="70" /></div>
+          <div class="db-field"><div class="db-label">Height (cm)</div><input class="db-input" id="pHeight" type="number" placeholder="175" /></div>
+        </div>
+        <div class="db-field" style="margin-bottom:.75rem">
+          <div class="db-label">Goal</div>
+          <select class="db-select" id="pGoal">
+            <option value="muscle_gain">Build Muscle</option>
+            <option value="fat_loss">Lose Fat</option>
+            <option value="strength">Get Stronger</option>
+            <option value="endurance">Build Endurance</option>
+            <option value="general">General Fitness</option>
+          </select>
+        </div>
+        <button class="db-save-btn" onclick="saveProfile()">Save Profile</button>
+        <div class="db-success-msg" id="profileMsg">Profile saved successfully!</div>
+      </div>
+    </div>
+
+  </div><!-- /db-main -->
+</div><!-- /db-wrap -->
+</div><!-- /dashboard -->
+
+<script>
+// ══ SUPABASE INIT ══
+const SB_URL = 'https://asynckkuczhraowrgbwx.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzeW5na2t1Y3pocmFvd3JnYnd4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk4MDQxNDAsImV4cCI6MjA5NTM4MDE0MH0.E1uR5U5dbtNAia4-ny_G76Xxgqs8zBcM0hicpjuyYg4';
+const sb = supabase.createClient(SB_URL, SB_KEY);
+
+// ══ AUTH STATE ══
+let currentUser = null;
+let userProfile = null;
+
+async function initAuth() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) {
+    currentUser = session.user;
+    await showDashboard(currentUser);
+  }
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'SIGNED_IN' && session?.user) {
+      currentUser = session.user;
+      await showDashboard(currentUser);
+    } else if (event === 'SIGNED_OUT') {
+      hideDashboard();
+    }
+  });
+}
+
+// ══ SHOW / HIDE DASHBOARD ══
+async function showDashboard(user) {
+  document.getElementById('dashboard').style.display = 'block';
+  document.querySelector('nav').style.display = 'none';
+  document.querySelector('.hero')?.style && (document.querySelector('.hero').style.display = 'none');
+  document.querySelectorAll('.strip,.sec,.wk-sec,.ai-sec,.prog-sec,.price-sec,.cta-band,footer').forEach(el => { if(el) el.style.display = 'none'; });
+  closeAuth();
+  await loadProfile(user);
+  renderHomePage();
+}
+
+function hideDashboard() {
+  document.getElementById('dashboard').style.display = 'none';
+  document.querySelector('nav').style.display = '';
+  document.querySelector('.hero')?.style && (document.querySelector('.hero').style.display = '');
+  document.querySelectorAll('.strip,.sec,.wk-sec,.ai-sec,.prog-sec,.price-sec,.cta-band,footer').forEach(el => { if(el) el.style.display = ''; });
+  currentUser = null; userProfile = null;
+}
+
+// ══ LOAD PROFILE ══
+async function loadProfile(user) {
+  const { data } = await sb.from('profiles').select('*').eq('id', user.id).single();
+  userProfile = data;
+  const fname = data?.first_name || user.user_metadata?.first_name || 'Athlete';
+  const lname = data?.last_name || user.user_metadata?.last_name || '';
+  const initials = (fname[0] + (lname[0] || '')).toUpperCase();
+  document.getElementById('dbAv').textContent = initials;
+  document.getElementById('dbUname').textContent = fname + ' ' + lname;
+  document.getElementById('dbUemail').textContent = user.email;
+  const hour = new Date().getHours();
+  const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('dbGreeting').textContent = greet + ', ' + fname + '!';
+  document.getElementById('dbDate').textContent = new Date().toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  document.getElementById('statStreak').textContent = data?.streak || 0;
+  document.getElementById('statSessions').textContent = data?.sessions || 0;
+  document.getElementById('prStreak').textContent = data?.streak || 0;
+  document.getElementById('prSessions').textContent = data?.sessions || 0;
+  document.getElementById('homeWelcomeMsg').textContent = `Hey ${fname}! Ready to train today? Ask me anything about your workout or nutrition.`;
+  document.getElementById('planBadge').textContent = (data?.plan || 'free').charAt(0).toUpperCase() + (data?.plan || 'free').slice(1) + ' Plan';
+  if ((data?.plan || 'free') !== 'free') document.getElementById('upgradeBanner').style.display = 'none';
+  // pre-fill profile form
+  if (data) {
+    document.getElementById('pFirst').value = data.first_name || '';
+    document.getElementById('pLast').value = data.last_name || '';
+    document.getElementById('pWeight').value = data.weight || '';
+    document.getElementById('pHeight').value = data.height || '';
+    document.getElementById('pGoal').value = data.goal || 'muscle_gain';
+  }
+}
+
+// ══ REAL AUTH FUNCTIONS ══
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pw = document.getElementById('loginPw').value;
+  if (!email || !email.includes('@')) { showMsg('loginMsg','Enter a valid email','err'); return; }
+  if (pw.length < 6) { showMsg('loginMsg','Password too short','err'); return; }
+  const btn = document.querySelector('#loginPanel .auth-submit');
+  btn.textContent = 'Logging in...'; btn.disabled = true; btn.style.opacity = '.7';
+  const { error } = await sb.auth.signInWithPassword({ email, password: pw });
+  btn.textContent = 'Log In to GRYNDEX'; btn.disabled = false; btn.style.opacity = '1';
+  if (error) { showMsg('loginMsg', error.message, 'err'); return; }
+  showMsg('loginMsg', 'Welcome back! Loading your dashboard...', 'ok');
+}
+
+async function doRegister() {
+  const first = document.getElementById('regFirst').value.trim();
+  const last = document.getElementById('regLast').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const pw = document.getElementById('regPw').value;
+  const pw2 = document.getElementById('regPw2').value;
+  const agreed = document.getElementById('agreeCheck').checked;
+  if (!first || !last) { showMsg('registerMsg','Enter your full name','err'); return; }
+  if (!email || !email.includes('@')) { showMsg('registerMsg','Enter a valid email','err'); return; }
+  if (pw.length < 8) { showMsg('registerMsg','Password must be 8+ characters','err'); return; }
+  if (pw !== pw2) { showMsg('registerMsg','Passwords do not match','err'); return; }
+  if (!agreed) { showMsg('registerMsg','Please agree to Terms','err'); return; }
+  const btn = document.querySelector('#registerPanel .auth-submit');
+  btn.textContent = 'Creating account...'; btn.disabled = true; btn.style.opacity = '.7';
+  const { error } = await sb.auth.signUp({
+    email, password: pw,
+    options: { data: { first_name: first, last_name: last } }
+  });
+  btn.textContent = 'Create My GRYNDEX Account'; btn.disabled = false; btn.style.opacity = '1';
+  if (error) { showMsg('registerMsg', error.message, 'err'); return; }
+  showMsg('registerMsg', `Welcome to GRYNDEX, ${first}! Loading your dashboard...`, 'ok');
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  hideDashboard();
+}
+
+// ══ SAVE PROFILE ══
+async function saveProfile() {
+  if (!currentUser) return;
+  const { error } = await sb.from('profiles').upsert({
+    id: currentUser.id,
+    first_name: document.getElementById('pFirst').value.trim(),
+    last_name: document.getElementById('pLast').value.trim(),
+    weight: parseFloat(document.getElementById('pWeight').value) || null,
+    height: parseFloat(document.getElementById('pHeight').value) || null,
+    goal: document.getElementById('pGoal').value,
+  });
+  const msg = document.getElementById('profileMsg');
+  msg.style.display = 'block';
+  msg.textContent = error ? 'Error saving: ' + error.message : 'Profile saved successfully!';
+  msg.style.color = error ? 'var(--red)' : 'var(--lime)';
+  if (!error) await loadProfile(currentUser);
+  setTimeout(() => msg.style.display = 'none', 3000);
+}
+
+// ══ DASHBOARD NAV ══
+function dbPage(page) {
+  document.querySelectorAll('.db-page').forEach(p => p.classList.remove('show'));
+  document.querySelectorAll('.db-nav-item').forEach(n => n.classList.remove('act'));
+  document.getElementById('pg-' + page).classList.add('show');
+  event.currentTarget.classList.add('act');
+  if (page === 'workout') renderWorkout('chest');
+}
+
+// ══ WORKOUT DATA (uses existing WK from landing page) ══
+
+function renderWorkout(tab, container='wkList') {
+  const list = document.getElementById(container);
+  if (!list) return;
+  list.innerHTML = '';
+  WK[tab].forEach((ex, i) => {
+    const d = document.createElement('div');
+    d.className = 'db-ex';
+    d.innerHTML = `<div class="db-ex-num">0${i+1}</div><div><div class="db-ex-name">${ex.n}</div><div class="db-ex-meta">${ex.r} &nbsp;·&nbsp; Rest ${ex.rest}</div></div><div class="db-ex-sets" style="margin-left:auto">${ex.s}<span style="font-size:.6rem;color:var(--g2);font-family:'Space Grotesk'"> sets</span></div>`;
+    list.appendChild(d);
+  });
+}
+
+function renderHomePage() {
+  // Today's plan on home
+  const days = ['core','chest','back','legs','shoulders','arms','core'];
+  const todayTab = days[new Date().getDay()];
+  const hw = document.getElementById('homeWorkout');
+  if (hw) {
+    hw.innerHTML = `<div style="font-size:.68rem;font-weight:700;color:var(--lime);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.6rem">${todayTab.toUpperCase()} DAY</div>`;
+    WK[todayTab].slice(0,3).forEach((ex,i) => {
+      const d = document.createElement('div');
+      d.className = 'db-ex';
+      d.innerHTML = `<div class="db-ex-num">0${i+1}</div><div><div class="db-ex-name">${ex.n}</div><div class="db-ex-meta">${ex.r}</div></div><div class="db-ex-sets" style="margin-left:auto">${ex.s}<span style="font-size:.6rem;color:var(--g2)"> sets</span></div>`;
+      hw.appendChild(d);
+    });
+  }
+}
+
+// Workout tab switching
+document.querySelectorAll('#wkTabs .db-tab').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('#wkTabs .db-tab').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    renderWorkout(btn.dataset.m);
+  };
+});
+
+// ══ AI COACH RESPONSES ══
+const DB_AIR = {
+  'pre-workout meal':   'Pre-workout: 90 min before, eat 2 rotis + paneer OR oats + banana + whey. Target 40–50g carbs + 25g protein. Avoid heavy fats.',
+  'protein':            'Target 1.6–2.2g per kg bodyweight. 75kg = 120–165g/day. Best sources: paneer (18g/100g), chicken (31g/100g), eggs (6g each), dal (9g/cup), whey (25g/scoop).',
+  'bench':              'For bench: grip slightly wider than shoulder-width, elbows at 60–70°, retract shoulder blades before lifting. Slow down the negative — 3 seconds.',
+  '7-day':              'GRYNDEX 7-day split:\nMon — Chest + Triceps\nTue — Back + Biceps\nWed — Legs\nThu — REST\nFri — Shoulders\nSat — Arms + Core\nSun — REST',
+};
+function getAIResp(msg) {
+  const m = msg.toLowerCase();
+  for (const [k,v] of Object.entries(DB_AIR)) { if (m.includes(k.split(' ')[0])) return v; }
+  const fb = ['Progressive overload is your best friend. Add 2.5kg when you complete all reps with perfect form for 2 sessions.','Your consistency is what builds the physique. Show up every day and the results compound.','Focus on mind-muscle connection — feel every rep in the target muscle.','Sleep and nutrition are 80% of your results. Train hard, recover harder.'];
+  return fb[Math.floor(Math.random()*fb.length)];
+}
+function addDbBubble(bodyId, text, type) {
+  const cb = document.getElementById(bodyId);
+  if (!cb) return;
+  const d = document.createElement('div');
+  d.className = 'db-bubble ' + type;
+  d.textContent = text;
+  cb.appendChild(d);
+  cb.scrollTop = cb.scrollHeight;
+}
+function addDbTyping(bodyId) {
+  const cb = document.getElementById(bodyId);
+  const d = document.createElement('div');
+  d.className = 'db-bubble ai db-ty';
+  d.innerHTML = '<div class="db-ty-dots"><span></span><span></span><span></span></div>';
+  cb.appendChild(d); cb.scrollTop = cb.scrollHeight;
+  return d;
+}
+function sendToCoach(bodyId, inpId) {
+  const inp = document.getElementById(inpId);
+  const msg = inp ? inp.value.trim() : '';
+  if (!msg) return;
+  addDbBubble(bodyId, msg, 'me');
+  if (inp) inp.value = '';
+  const ty = addDbTyping(bodyId);
+  setTimeout(() => { ty.remove(); addDbBubble(bodyId, getAIResp(msg), 'ai'); }, 800 + Math.random()*500);
+}
+function homeChat() { sendToCoach('homeChatBody','homeInp'); }
+function coachChat() { sendToCoach('coachChatBody','coachInp'); }
+function quickCoach(text) {
+  addDbBubble('coachChatBody', text, 'me');
+  const ty = addDbTyping('coachChatBody');
+  setTimeout(() => { ty.remove(); addDbBubble('coachChatBody', getAIResp(text), 'ai'); }, 800);
+}
+document.getElementById('homeInp')?.addEventListener('keydown', e => { if(e.key==='Enter') homeChat(); });
+document.getElementById('coachInp')?.addEventListener('keydown', e => { if(e.key==='Enter') coachChat(); });
+
+// ══ BOOT ══
+initAuth();
 </script>
 </body>
 </html>
