@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>GRYNDEX — Elite AI Gym Coach</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0c0c0c;--s1:#141414;--s2:#1a1a1a;--s3:#222;--s4:#2a2a2a;
+  --lime:#C8FF00;--lime2:#80FF44;--limeg:linear-gradient(135deg,#C8FF00,#80FF44);
+  --limegr:linear-gradient(135deg,#80FF44,#C8FF00);
+  --limea:rgba(200,255,0,0.12);--limea2:rgba(200,255,0,0.06);
+  --w:#fff;--g1:rgba(255,255,255,.7);--g2:rgba(255,255,255,.4);--g3:rgba(255,255,255,.15);
+  --br:rgba(255,255,255,.08);--br2:rgba(255,255,255,.14);--br3:rgba(255,255,255,.22);
+  --red:#FF3D57;--teal:#00E5CC;--amber:#FFB830;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;font-size:15px}
+body{background:var(--bg);color:var(--w);font-family:'Space Grotesk',sans-serif;overflow-x:hidden;line-height:1.6}
+a{text-decoration:none;color:inherit}
+button{font-family:'Space Grotesk',sans-serif;cursor:pointer}
+
+/* ══ SCROLLBAR ══ */
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--s4);border-radius:10px}
+
+/* ══ NAV ══ */
+nav{position:fixed;inset:0 0 auto;z-index:9999;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 2rem;background:rgba(12,12,12,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--br)}
+.logo{font-family:'Outfit',sans-serif;font-size:1.25rem;letter-spacing:.04em;font-weight:700}
+.logo em{background:var(--limeg);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-style:normal}
+.nav-c{display:flex;gap:1.8rem;align-items:center}
+.nav-c a{font-size:.72rem;font-weight:600;color:var(--g2);letter-spacing:.08em;text-transform:uppercase;transition:color .2s}
+.nav-c a:hover{color:var(--lime)}
+.nav-r{display:flex;gap:.5rem;align-items:center}
+.nb{font-size:.72rem;font-weight:700;letter-spacing:.05em;padding:.42rem 1.1rem;border-radius:6px;border:1px solid var(--br2);background:transparent;color:var(--g2);transition:all .2s}
+.nb:hover{color:var(--w);border-color:var(--br3)}
+.nb.p{background:var(--limeg);color:#0c0c0c;border:none;letter-spacing:.06em}
+.nb.p:hover{filter:brightness(1.1);transform:scale(1.03)}
+
+/* ══ HERO ══ */
+.hero{position:relative;min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:5rem 2.5rem 3rem;overflow:hidden}
+.hero-bg-grad{position:absolute;inset:0;background:radial-gradient(ellipse 80% 80% at 60% 40%,rgba(200,255,0,.04) 0%,transparent 60%),radial-gradient(ellipse 50% 50% at 20% 70%,rgba(0,229,204,.03) 0%,transparent 55%);animation:bgPulse 8s ease-in-out infinite alternate}
+@keyframes bgPulse{0%{opacity:.6}100%{opacity:1}}
+.hero-noise{position:absolute;inset:0;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.03'/%3E%3C/svg%3E");z-index:0;pointer-events:none}
+.gym-blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:.07;pointer-events:none;animation:blobMove 12s ease-in-out infinite alternate}
+.gb1{width:500px;height:500px;background:#C8FF00;right:-100px;top:-100px;animation-delay:0s}
+.gb2{width:350px;height:350px;background:#00E5CC;left:-80px;bottom:100px;animation-delay:-4s}
+.gb3{width:250px;height:250px;background:#fff;left:40%;top:30%;animation-delay:-7s}
+@keyframes blobMove{0%{transform:translate(0,0) scale(1)}100%{transform:translate(30px,20px) scale(1.08)}}
+.scanlines{position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.08) 3px,rgba(0,0,0,.08) 4px);pointer-events:none;z-index:0;opacity:.5}
+.hero-inner{position:relative;z-index:2;display:grid;grid-template-columns:1fr 1.1fr;gap:2rem;align-items:center;max-width:1300px;width:100%}
+.hero-r{display:flex;gap:1rem;align-items:center;justify-content:center}
+
+/* Tag */
+.h-tag{display:inline-flex;align-items:center;gap:.45rem;background:var(--limea);border:1px solid rgba(200,255,0,.22);border-radius:4px;padding:.28rem .75rem;font-size:.65rem;font-weight:600;color:var(--lime);letter-spacing:.12em;text-transform:uppercase;margin-bottom:1.2rem;font-family:'Space Grotesk',sans-serif}
+.td{width:5px;height:5px;border-radius:50%;background:var(--lime);animation:blink 1.3s infinite}
+@keyframes blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
+
+/* Headline */
+.h1{font-family:'Outfit',sans-serif;line-height:.93;letter-spacing:-.02em;margin-bottom:1.4rem;display:flex;flex-direction:column}
+.h1-line{display:block}
+.h1-w{font-size:clamp(3rem,7.5vw,7rem);color:var(--w);font-weight:800}
+.h1-lime{font-size:clamp(3rem,7.5vw,7rem);background:var(--limeg);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:800}
+.h1-ghost{font-family:'Outfit',sans-serif;font-weight:200;font-size:clamp(2.6rem,7vw,6.5rem);color:rgba(255,255,255,.13);letter-spacing:.02em;margin-top:.05rem}
+.h-sub{font-size:.9rem;color:var(--g1);line-height:1.8;max-width:400px;margin-bottom:1.4rem;font-weight:400;font-family:'Space Grotesk',sans-serif}
+
+/* Buttons */
+.hero-btns{display:flex;gap:.7rem;flex-wrap:wrap;margin-bottom:1rem}
+.btn-grad{background:var(--limeg);color:#0c0c0c;border:none;padding:.8rem 1.8rem;border-radius:8px;font-weight:700;font-size:.8rem;letter-spacing:.05em;text-transform:uppercase;display:flex;align-items:center;gap:.5rem;transition:all .25s;font-family:'Space Grotesk',sans-serif}
+.btn-grad:hover{filter:brightness(1.1);transform:translateY(-2px);box-shadow:0 10px 30px rgba(200,255,0,.25)}
+.btn-line{background:transparent;border:1px solid var(--br3);color:var(--w);padding:.8rem 1.8rem;border-radius:8px;font-weight:500;font-size:.8rem;letter-spacing:.04em;transition:all .25s;font-family:'Space Grotesk',sans-serif}
+.btn-line:hover{border-color:rgba(200,255,0,.4);color:var(--lime);background:var(--limea2)}
+
+/* App badges */
+.app-badges{display:flex;gap:.55rem;margin-bottom:1rem;flex-wrap:wrap}
+.app-badge{display:flex;align-items:center;gap:.55rem;background:var(--s2);border:1px solid var(--br2);border-radius:10px;padding:.5rem .9rem;cursor:pointer;transition:all .25s;font-family:'Space Grotesk',sans-serif}
+.app-badge:hover{border-color:var(--br3);background:var(--s3);transform:translateY(-2px)}
+.ab-sub{font-size:.52rem;color:var(--g2);text-transform:uppercase;letter-spacing:.06em}
+.ab-main{font-size:.75rem;font-weight:700;color:var(--w)}
+
+/* Trust */
+.h-trust{display:flex;align-items:center;gap:.9rem}
+.avs{display:flex}
+.av{width:28px;height:28px;border-radius:50%;border:2px solid var(--bg);font-size:.6rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin-left:-7px;font-family:'Space Grotesk',sans-serif}
+.av:first-child{margin-left:0}
+.a1{background:#FF6B6B}.a2{background:#4ECDC4}.a3{background:var(--lime);color:#111}.a4{background:#FFB830;color:#111}
+.trust-t{font-size:.72rem;color:var(--g2);font-family:'Space Grotesk',sans-serif}.trust-t strong{color:var(--w)}
+
+/* ══ 3D PHONE ══ */
+.phone3d-scene{position:relative;perspective:1100px;display:flex;justify-content:center;align-items:center;flex-shrink:0}
+.phone3d{position:relative;transform-style:preserve-3d;transform:rotateY(-18deg) rotateX(4deg);animation:phoneFloat 5s ease-in-out infinite}
+@keyframes phoneFloat{0%,100%{transform:rotateY(-18deg) rotateX(4deg) translateY(0)}50%{transform:rotateY(-18deg) rotateX(4deg) translateY(-14px)}}
+.phone3d-frame{width:230px;height:480px;background:linear-gradient(145deg,#2a2a2a,#191919);border-radius:36px;border:1.5px solid rgba(255,255,255,.12);overflow:hidden;position:relative;z-index:2;box-shadow:0 0 0 1.5px rgba(0,0,0,.8),inset 0 0 0 1px rgba(255,255,255,.04),0 40px 80px rgba(0,0,0,.6)}
+.phone3d-side-r{position:absolute;right:-7px;top:28px;bottom:28px;width:7px;background:linear-gradient(to right,#1e1e1e,#111);border-radius:0 6px 6px 0;z-index:1}
+.phone3d-side-b{position:absolute;bottom:-7px;left:18px;right:18px;height:7px;background:linear-gradient(to bottom,#1e1e1e,#111);border-radius:0 0 6px 6px;z-index:1}
+.phone3d-glow{position:absolute;bottom:-50px;left:50%;transform:translateX(-50%);width:200px;height:60px;background:radial-gradient(ellipse,rgba(200,255,0,.3) 0%,transparent 70%);filter:blur(18px);z-index:0}
+.phone3d-screen{width:100%;height:100%;background:var(--bg);display:flex;flex-direction:column}
+.p3-top{height:34px;background:#0a0a0a;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.p3-notch{width:85px;height:24px;background:#111;border-radius:0 0 16px 16px;border:1px solid rgba(255,255,255,.05)}
+.p3-inner{flex:1;padding:.7rem .75rem;overflow:hidden;display:flex;flex-direction:column;gap:.5rem}
+.p3-header{display:flex;justify-content:space-between;align-items:center}
+.p3-greet{font-size:.42rem;color:var(--g2);text-transform:uppercase;letter-spacing:.06em;font-family:'Space Grotesk',sans-serif}
+.p3-name{font-family:'Outfit',sans-serif;font-size:.88rem;font-weight:700;letter-spacing:-.01em;color:var(--w)}
+.p3-av{width:28px;height:28px;border-radius:50%;background:var(--lime);display:flex;align-items:center;justify-content:center;font-size:.52rem;font-weight:800;color:#111;font-family:'Space Grotesk',sans-serif}
+.p3-rings-row{display:flex;align-items:center;gap:.55rem;background:var(--s2);border-radius:10px;padding:.5rem .6rem;border:1px solid var(--br)}
+.p3-ring-stats{display:flex;flex-direction:column;gap:.22rem;flex:1}
+.p3-rs{display:flex;align-items:baseline;gap:.25rem}
+.p3-rs span{font-family:'Outfit',sans-serif;font-size:.82rem;font-weight:700;letter-spacing:-.02em}
+.p3-rs small{font-size:.38rem;color:var(--g2);font-family:'Space Grotesk',sans-serif;text-transform:uppercase;letter-spacing:.06em}
+.p3-plan{background:var(--lime);border-radius:10px;padding:.5rem .65rem;position:relative}
+.p3-plan-tag{font-size:.36rem;font-weight:700;color:rgba(0,0,0,.5);text-transform:uppercase;letter-spacing:.08em;font-family:'Space Grotesk',sans-serif}
+.p3-plan-title{font-family:'Outfit',sans-serif;font-size:.78rem;font-weight:700;letter-spacing:-.01em;color:#0c0c0c;margin:.08rem 0}
+.p3-plan-meta{font-size:.4rem;color:rgba(0,0,0,.55);font-family:'Space Grotesk',sans-serif}
+.p3-plan-btn{position:absolute;right:.55rem;top:50%;transform:translateY(-50%);background:#0c0c0c;color:var(--lime);border-radius:20px;padding:.22rem .55rem;font-size:.4rem;font-weight:800;font-family:'Space Grotesk',sans-serif;letter-spacing:.06em}
+.p3-ai{display:flex;align-items:flex-start;gap:.3rem;background:var(--s2);border-radius:8px;padding:.38rem .48rem;border:1px solid var(--br)}
+.p3-ai-dot{width:5px;height:5px;border-radius:50%;background:var(--lime);flex-shrink:0;margin-top:2px;animation:blink 1.3s infinite}
+.p3-ai-text{font-size:.43rem;color:var(--g1);line-height:1.5;font-family:'Space Grotesk',sans-serif}
+.p3-prog{display:flex;flex-direction:column;gap:.28rem}
+.p3-prog-row{display:flex;align-items:center;gap:.38rem}
+.p3-prog-row span{font-size:.4rem;color:var(--g2);width:50px;flex-shrink:0;font-family:'Space Grotesk',sans-serif}
+.p3-bar{flex:1;height:3px;background:var(--s4);border-radius:100px;overflow:hidden}
+.p3-fill{height:100%;background:var(--lime);border-radius:100px}
+.p3-nav{display:flex;justify-content:space-around;align-items:center;padding:.45rem 0;border-top:1px solid var(--br);margin-top:auto}
+.p3-nav-item{width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:7px}
+.p3-nav-item.active-nav{background:var(--limea)}
+
+/* Floating notification cards */
+.notif-card{position:absolute;background:rgba(18,18,18,.95);border:1px solid var(--br2);border-radius:12px;padding:.5rem .7rem;display:flex;align-items:center;gap:.55rem;backdrop-filter:blur(14px);box-shadow:0 12px 30px rgba(0,0,0,.5);z-index:10;white-space:nowrap}
+.nc1{left:-85px;top:12%;animation:notif1 4s ease-in-out infinite}
+.nc2{right:-80px;top:40%;animation:notif2 4s 1.5s ease-in-out infinite}
+.nc3{left:-70px;bottom:18%;animation:notif1 4s 3s ease-in-out infinite}
+@keyframes notif1{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes notif2{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.nc-icon{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.nc-val{font-family:'Outfit',sans-serif;font-size:.88rem;font-weight:700;letter-spacing:-.02em;color:var(--lime);line-height:1}
+.nc-lbl{font-size:.48rem;color:var(--g2);font-family:'Space Grotesk',sans-serif}
+
+
+/* ══ INTERACTIVE STAT PILLS ══ */
+.stat-pills{display:flex;flex-direction:column;gap:.75rem;align-items:flex-end}
+.s-pill{position:relative;background:var(--s2);border:1px solid var(--br2);border-radius:14px;padding:.7rem 1rem;cursor:pointer;transition:all .35s;min-width:190px;overflow:hidden;z-index:10}
+.s-pill:hover,.s-pill.open{border-color:rgba(200,255,0,.35);background:var(--s3)}
+.s-pill-top{display:flex;align-items:center;gap:.7rem}
+.sp-icon{width:32px;height:32px;border-radius:8px;background:var(--limea);border:1px solid rgba(200,255,0,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sp-main{flex:1}
+.sp-val{font-family:'Outfit',sans-serif;font-size:1.2rem;font-weight:800;letter-spacing:-.03em;line-height:1}
+.sp-val.green{background:var(--limeg);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sp-val.teal{color:var(--teal)}
+.sp-val.amber{color:var(--amber)}
+.sp-lbl{font-size:.58rem;color:var(--g2);font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.sp-arr{font-size:.7rem;color:var(--g2);transition:transform .3s}
+.s-pill.open .sp-arr,.s-pill:hover .sp-arr{transform:rotate(180deg);color:var(--lime)}
+/* expanded panel */
+.sp-expand{max-height:0;overflow:hidden;transition:max-height .4s ease,opacity .3s ease,padding .3s ease;opacity:0;padding:0}
+.s-pill.open .sp-expand,.s-pill:hover .sp-expand{max-height:160px;opacity:1;padding-top:.8rem}
+.expand-label{font-size:.6rem;font-weight:700;color:var(--g2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.6rem}
+.mini-bars-h{display:flex;align-items:flex-end;gap:4px;height:48px;border-bottom:1px solid var(--br)}
+.mb{flex:1;border-radius:3px 3px 0 0;transition:height .6s ease;background:var(--s4)}
+.mb.hi{background:var(--lime)}
+.mb.med{background:rgba(200,255,0,.5)}
+.mini-week{display:flex;gap:4px;margin-top:4px}
+.mwl{flex:1;font-size:.45rem;color:var(--g2);text-align:center;text-transform:uppercase}
+.expand-row{display:flex;justify-content:space-between;align-items:center;margin-top:.6rem}
+.er-item{text-align:center}
+.er-val{font-family:'Outfit',sans-serif;font-size:.95rem;font-weight:700;color:var(--lime);letter-spacing:-.02em;line-height:1}
+.er-lbl{font-size:.5rem;color:var(--g2);text-transform:uppercase;letter-spacing:.06em}
+
+/* ══ STATS STRIP ══ */
+.strip{display:grid;grid-template-columns:repeat(5,1fr);background:var(--s1);border-top:1px solid var(--br);border-bottom:1px solid var(--br)}
+.s-item{padding:1.2rem .5rem;text-align:center;border-right:1px solid var(--br);position:relative;overflow:hidden;transition:background .25s;cursor:default}
+.s-item:last-child{border-right:none}
+.s-item:hover{background:var(--s2)}
+.s-item::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--limeg);transform:scaleX(0);transition:transform .3s}
+.s-item:hover::after{transform:scaleX(1)}
+.s-n{font-family:'Outfit',sans-serif;font-size:2rem;font-weight:800;letter-spacing:-.02em;line-height:1;background:var(--limeg);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.s-l{font-size:.62rem;color:var(--g2);text-transform:uppercase;letter-spacing:.08em;margin-top:.15rem;font-weight:600}
+
+/* ══ FEATURES ══ */
+.sec{padding:4.5rem 2rem}
+.ey{display:inline-flex;align-items:center;gap:.45rem;font-size:.65rem;font-weight:600;color:var(--lime);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.7rem;font-family:'Space Grotesk',sans-serif}
+.ey::before{content:'';width:18px;height:1px;background:var(--lime)}
+.sh{font-family:'Outfit',sans-serif;font-weight:800;font-size:clamp(2.2rem,4.5vw,3.8rem);letter-spacing:-.02em;line-height:.95;margin-bottom:2.5rem}
+.sh .gr{background:var(--limeg);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sh .dm{color:var(--g2);font-weight:200}
+
+.bento{display:grid;grid-template-columns:repeat(12,1fr);gap:.75rem}
+.fc{background:var(--s1);border:1px solid var(--br);border-radius:16px;padding:1.5rem;transition:all .3s;position:relative;overflow:hidden;cursor:default}
+.fc::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(200,255,0,.06),transparent 60%);opacity:0;transition:opacity .3s}
+.fc:hover::before{opacity:1}
+.fc:hover{border-color:rgba(200,255,0,.22);transform:translateY(-3px)}
+.fc1{grid-column:span 5}.fc2{grid-column:span 4}.fc3{grid-column:span 3}
+.fc4{grid-column:span 7}.fc5{grid-column:span 5}
+.fi{width:38px;height:38px;background:var(--limea);border:1px solid rgba(200,255,0,.2);border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:1rem}
+.fn{font-size:.58rem;font-weight:500;color:var(--g2);letter-spacing:.08em;margin-bottom:.4rem;font-family:'Space Grotesk',sans-serif}
+.ft{font-family:'Outfit',sans-serif;font-size:1rem;font-weight:700;margin-bottom:.4rem;letter-spacing:-.01em}
+.fd{font-size:.82rem;color:var(--g1);line-height:1.7;font-family:'Space Grotesk',sans-serif;font-weight:400}
+
+/* mini bar chart in feature */
+.mc{margin-top:1rem;background:var(--s2);border-radius:10px;padding:.8rem;border:1px solid var(--br)}
+.mcb{display:flex;align-items:flex-end;gap:4px;height:38px;margin-bottom:.35rem}
+.mcbar{flex:1;border-radius:2px 2px 0 0;transition:height .7s ease}
+.mcbar.lit{background:var(--lime)}
+.mcbar.dim{background:var(--s4)}
+.mcl{display:flex;gap:4px}
+.mclbl{flex:1;font-size:.42rem;color:var(--g2);text-align:center;text-transform:uppercase}
+
+/* prog bars */
+.prs{margin-top:1rem;display:flex;flex-direction:column;gap:.55rem}
+.pr{display:flex;align-items:center;gap:.6rem}
+.prn{font-size:.62rem;color:var(--g1);width:58px;flex-shrink:0;font-weight:500}
+.prt{flex:1;height:4px;background:var(--s4);border-radius:100px;overflow:hidden}
+.prf{height:100%;border-radius:100px;background:var(--limeg);width:0;transition:width 1.3s cubic-bezier(.22,1,.36,1)}
+.prp{font-size:.6rem;font-weight:700;color:var(--lime);width:26px;text-align:right;flex-shrink:0}
+
+/* ══ WORKOUT SECTION ══ */
+.wk-sec{padding:4.5rem 2rem;background:var(--s1)}
+.wk-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:2.5rem;align-items:start}
+
+/* tabs */
+.tabs{display:flex;gap:.4rem;margin-bottom:1.2rem;flex-wrap:wrap}
+.tab{font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:.4rem .9rem;border-radius:6px;border:1px solid var(--br2);background:transparent;color:var(--g2);transition:all .2s}
+.tab.on{background:var(--limeg);color:#0c0c0c;border-color:transparent}
+.tab:hover:not(.on){border-color:var(--br3);color:var(--w)}
+
+/* exercise cards */
+.ex-list{display:flex;flex-direction:column;gap:.5rem}
+.ex-card{display:flex;align-items:center;gap:.9rem;background:var(--s2);border:1px solid var(--br);border-radius:12px;padding:.85rem 1rem;cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
+.ex-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--limeg);border-radius:2px;transform:scaleY(0);transition:transform .25s}
+.ex-card:hover,.ex-card.on{border-color:rgba(200,255,0,.25);background:var(--s3)}
+.ex-card.on::before{transform:scaleY(1)}
+.ex-n{font-family:'Outfit',sans-serif;font-size:1.1rem;color:var(--g2);width:22px;flex-shrink:0;letter-spacing:.04em}
+.ex-info{flex:1}.ex-name{font-size:.82rem;font-weight:600;margin-bottom:.1rem}
+.ex-meta{font-size:.65rem;color:var(--g2)}
+.ex-sets{font-family:'Outfit',sans-serif;font-size:1.3rem;font-weight:800;letter-spacing:-.03em;background:var(--limeg);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+
+/* timer */
+.timer-box{background:var(--s2);border:1px solid var(--br);border-radius:16px;padding:1.6rem;text-align:center;position:sticky;top:70px}
+.t-label{font-size:.62rem;font-weight:800;color:var(--lime);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.4rem}
+.t-disp{font-family:'Outfit',sans-serif;font-size:4.5rem;font-weight:800;letter-spacing:-.04em;line-height:1;margin-bottom:1.2rem;transition:color .3s}
+.t-disp.go{background:var(--limeg);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.t-ctrls{display:flex;justify-content:center;gap:.8rem;margin-bottom:1.2rem}
+.tc{width:48px;height:48px;border-radius:50%;border:none;display:flex;align-items:center;justify-content:center;transition:all .25s}
+.tc.play{background:var(--limeg);color:#0c0c0c}
+.tc.play:hover{filter:brightness(1.1);transform:scale(1.08)}
+.tc.rst{background:var(--s3);color:var(--g1);border:1px solid var(--br2)}
+.tc.rst:hover{border-color:var(--br3)}
+.t-track{height:3px;background:var(--s4);border-radius:100px;overflow:hidden;margin-bottom:1.2rem}
+.t-fill{height:100%;background:var(--limeg);width:0;transition:width .1s linear;border-radius:100px}
+.t-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem}
+.ts-card{background:var(--s3);border-radius:8px;padding:.6rem;text-align:center;border:1px solid var(--br)}
+.ts-val{font-family:'Outfit',sans-serif;font-size:1.3rem;font-weight:800;letter-spacing:-.02em;color:var(--w);line-height:1}
+.ts-lbl{font-size:.5rem;color:var(--g2);text-transform:uppercase;letter-spacing:.08em;margin-top:.1rem}
+
+/* ══ AI CHAT ══ */
+.ai-sec{padding:4.5rem 2rem}
+.ai-grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start}
+.chat-win{background:var(--s1);border:1px solid var(--br);border-radius:16px;overflow:hidden}
+.ch-head{background:var(--s2);padding:.9rem 1.2rem;display:flex;align-items:center;gap:.8rem;border-bottom:1px solid var(--br)}
+.ch-av{width:34px;height:34px;border-radius:50%;background:var(--limeg);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ch-name{font-size:.8rem;font-weight:700;letter-spacing:.02em}
+.ch-st{font-size:.6rem;color:var(--lime);display:flex;align-items:center;gap:.3rem}
+.stdr{width:5px;height:5px;border-radius:50%;background:var(--lime);animation:blink 1.3s infinite}
+.chat-bod{padding:1rem;height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:.65rem}
+.chat-bod::-webkit-scrollbar{width:2px}
+.chat-bod::-webkit-scrollbar-thumb{background:var(--s4)}
+.bub{max-width:82%;padding:.6rem .85rem;border-radius:10px;font-size:.75rem;line-height:1.6}
+.bub.ai{background:var(--s3);border:1px solid var(--br);border-radius:10px 10px 10px 2px;align-self:flex-start;color:var(--g1)}
+.bub.me{background:var(--limeg);color:#0c0c0c;border-radius:10px 10px 2px 10px;align-self:flex-end;font-weight:600}
+.bub.ty{padding:.7rem .9rem}
+.ty-dots{display:flex;gap:3px}
+.ty-dots span{width:5px;height:5px;border-radius:50%;background:var(--g2);animation:tdot 1.1s infinite}
+.ty-dots span:nth-child(2){animation-delay:.18s}
+.ty-dots span:nth-child(3){animation-delay:.36s}
+@keyframes tdot{0%,100%{opacity:.25;transform:scale(.75)}50%{opacity:1;transform:scale(1)}}
+.ch-foot{padding:.75rem 1rem;border-top:1px solid var(--br);display:flex;gap:.5rem}
+.ch-inp{flex:1;background:var(--s3);border:1px solid var(--br2);border-radius:7px;padding:.5rem .8rem;font-size:.75rem;color:var(--w);outline:none;transition:border-color .2s}
+.ch-inp:focus{border-color:rgba(200,255,0,.35)}
+.ch-inp::placeholder{color:var(--g2)}
+.ch-send{width:34px;height:34px;background:var(--limeg);border:none;border-radius:7px;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.ch-send:hover{filter:brightness(1.1);transform:scale(1.06)}
+
+/* quick ask */
+.q-panel{background:var(--s1);border:1px solid var(--br);border-radius:16px;padding:1.2rem}
+.q-title{font-size:.62rem;font-weight:800;color:var(--g2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.8rem}
+.q-btn{width:100%;background:var(--s2);border:1px solid var(--br2);border-radius:8px;padding:.55rem .85rem;font-size:.73rem;color:var(--g1);cursor:pointer;text-align:left;transition:all .2s;display:flex;align-items:center;gap:.55rem;margin-bottom:.45rem}
+.q-btn:hover{border-color:rgba(200,255,0,.28);color:var(--w);background:var(--limea)}
+.q-btn:last-child{margin-bottom:0}
+
+/* ══ PROGRESS ══ */
+.prog-sec{padding:4.5rem 2rem;background:var(--s1)}
+.prog-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-top:2rem}
+.pg-card{background:var(--s2);border:1px solid var(--br);border-radius:16px;padding:1.4rem}
+.pg-t{font-size:.6rem;font-weight:800;color:var(--g2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.8rem}
+.big-n{font-family:'Outfit',sans-serif;font-size:2.8rem;font-weight:800;line-height:1;letter-spacing:-.03em;background:var(--limeg);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.big-l{font-size:.7rem;color:var(--g2);margin-top:.15rem}
+.wk-ch{display:flex;align-items:flex-end;gap:4px;height:50px;margin-top:.9rem}
+.wkb{flex:1;border-radius:3px 3px 0 0;min-height:3px;transition:height .9s cubic-bezier(.22,1,.36,1)}
+.wkb.ac{background:var(--lime)}
+.wkb.in{background:var(--s4)}
+
+/* donut */
+.dn-wrap{display:flex;align-items:center;gap:1rem;margin-top:.9rem}
+.dn-stats{flex:1;display:flex;flex-direction:column;gap:.5rem}
+.dn-row{display:flex;align-items:center;gap:.45rem}
+.dn-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dn-name{font-size:.65rem;color:var(--g1);flex:1}
+.dn-val{font-size:.68rem;font-weight:700}
+
+/* streak */
+.sk-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:.9rem}
+.sk-d{height:20px;border-radius:3px;transition:all .3s;cursor:pointer}
+.sk-d:hover{transform:scaleY(1.15)}
+.sk-on{background:var(--lime)}
+.sk-half{background:rgba(200,255,0,.35)}
+.sk-off{background:var(--s4)}
+
+/* ══ PRICING ══ */
+.price-sec{padding:4.5rem 2rem}
+.p-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-top:2rem}
+.pc{background:var(--s1);border:1px solid var(--br);border-radius:16px;padding:1.6rem;transition:all .3s;position:relative}
+.pc:hover{transform:translateY(-4px);border-color:var(--br2)}
+.pc.hot{border-color:var(--lime)}
+.pc.hot::before{content:'';position:absolute;inset:0;border-radius:16px;background:linear-gradient(135deg,rgba(200,255,0,.06),transparent 50%);pointer-events:none}
+.pc-badge{display:inline-block;background:var(--limeg);color:#0c0c0c;font-size:.58rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:.22rem .65rem;border-radius:4px;margin-bottom:.8rem}
+.pc-tier{font-size:.62rem;font-weight:800;color:var(--g2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.6rem}
+.pc-price{font-family:'Outfit',sans-serif;font-size:2.8rem;font-weight:800;letter-spacing:-.03em;line-height:1;margin-bottom:.15rem}
+.pc-per{font-size:.68rem;color:var(--g2);margin-bottom:1.2rem}
+.pc-div{height:1px;background:var(--br);margin:1.2rem 0}
+.pc-list{list-style:none;display:flex;flex-direction:column;gap:.6rem;margin-bottom:1.5rem}
+.pc-list li{display:flex;align-items:center;gap:.55rem;font-size:.77rem;color:var(--g1)}
+.pc-btn{width:100%;padding:.8rem;border-radius:8px;font-weight:800;font-size:.75rem;letter-spacing:.05em;text-transform:uppercase;transition:all .25s}
+.pcb-o{background:transparent;border:1px solid var(--br2);color:var(--w)}
+.pcb-o:hover{border-color:rgba(200,255,0,.35);color:var(--lime)}
+.pcb-g{background:var(--limeg);border:none;color:#0c0c0c}
+.pcb-g:hover{filter:brightness(1.1);transform:scale(1.02)}
+
+/* ══ CTA BANNER ══ */
+.cta-band{margin:0 2rem 4rem;background:var(--limeg);border-radius:18px;padding:3.5rem 2.5rem;display:flex;justify-content:space-between;align-items:center;gap:2rem;flex-wrap:wrap;position:relative;overflow:hidden}
+.cta-band::before{content:'';position:absolute;right:-50px;top:-60px;width:250px;height:250px;border-radius:50%;background:rgba(255,255,255,.1)}
+.cta-band::after{content:'';position:absolute;left:30%;bottom:-70px;width:180px;height:180px;border-radius:50%;background:rgba(0,0,0,.06)}
+.cta-h{font-family:'Outfit',sans-serif;font-size:clamp(2rem,4vw,3.2rem);font-weight:800;color:#0c0c0c;letter-spacing:-.02em;line-height:1;margin-bottom:.35rem;position:relative;z-index:1}
+.cta-p{font-size:.85rem;color:rgba(0,0,0,.6);position:relative;z-index:1}
+.cta-right{position:relative;z-index:1}
+.btn-dark{background:#0c0c0c;color:var(--lime);border:none;padding:.9rem 2.2rem;border-radius:8px;font-weight:800;font-size:.82rem;letter-spacing:.06em;text-transform:uppercase;transition:all .25s;display:flex;align-items:center;gap:.5rem}
+.btn-dark:hover{background:#1a1a1a;transform:scale(1.04)}
+
+/* ══ FOOTER ══ */
+footer{border-top:1px solid var(--br);padding:1.5rem 2rem;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:1rem}
+.f-logo{font-family:'Outfit',sans-serif;font-size:1.1rem;font-weight:700;letter-spacing:.02em}
+.f-logo em{background:var(--limeg);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-style:normal}
+.f-links{display:flex;gap:1.5rem;justify-content:center}
+.f-links a{font-size:.68rem;color:var(--g2);transition:color .2s;font-weight:500}
+.f-links a:hover{color:var(--lime)}
+.f-copy{font-size:.65rem;color:var(--g2);text-align:right}
+
+/* ══ MODALS ══ */
+.modal{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;padding:1rem}
+.modal.show{display:flex}
+.m-overlay{position:absolute;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(6px)}
+.m-box{position:relative;z-index:1;background:var(--s1);border:1px solid var(--br2);border-radius:18px;padding:2rem;max-width:600px;width:100%;max-height:85vh;overflow-y:auto}
+.m-box::-webkit-scrollbar{width:3px}
+.m-box::-webkit-scrollbar-thumb{background:var(--s4);border-radius:10px}
+.m-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--br)}
+.m-title{font-family:'Outfit',sans-serif;font-size:1.6rem;font-weight:800;letter-spacing:-.02em}
+.m-close{width:32px;height:32px;background:var(--s3);border:1px solid var(--br2);border-radius:6px;color:var(--g1);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;border:none;flex-shrink:0}
+.m-close:hover{background:var(--s4);color:var(--w)}
+.m-body h3{font-family:'Outfit',sans-serif;font-size:.9rem;font-weight:800;margin:1.2rem 0 .5rem;color:var(--lime)}
+.m-body p{font-size:.78rem;color:var(--g1);line-height:1.75;margin-bottom:.5rem}
+
+/* ══ SCROLL REVEAL ══ */
+.rv{opacity:0;transform:translateY(24px);transition:opacity .65s ease,transform .65s ease}
+.rv.vis{opacity:1;transform:none}
+.rvl{opacity:0;transform:translateX(-24px);transition:opacity .65s ease,transform .65s ease}
+.rvl.vis{opacity:1;transform:none}
+.rvr{opacity:0;transform:translateX(24px);transition:opacity .65s ease,transform .65s ease}
+.rvr.vis{opacity:1;transform:none}
+.rv-d1{transition-delay:.05s}.rv-d2{transition-delay:.12s}.rv-d3{transition-delay:.2s}.rv-d4{transition-delay:.28s}.rv-d5{transition-delay:.36s}
+
+@media(max-width:900px){
+  .hero-inner,.wk-grid,.ai-grid,.prog-grid,.p-grid{grid-template-columns:1fr}
+  .stat-pills{align-items:stretch;flex-direction:row;flex-wrap:wrap}
+  nav .nav-c{display:none}
+  .bento .fc{grid-column:span 12}
+  .strip{grid-template-columns:repeat(3,1fr)}
+  footer{grid-template-columns:1fr;text-align:center}
+  .f-copy{text-align:center}
+  .cta-band{flex-direction:column;text-align:center}
+}
+/* ══ AUTH MODALS ══ */
+.auth-modal{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;padding:1rem}
+.auth-modal.show{display:flex;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.auth-overlay{position:absolute;inset:0;background:rgba(0,0,0,.9);backdrop-filter:blur(10px)}
+.auth-box{position:relative;z-index:1;background:var(--s1);border:1px solid var(--br2);border-radius:22px;width:100%;max-width:440px;overflow:hidden;animation:slideUp .32s cubic-bezier(.22,1,.36,1)}
+@keyframes slideUp{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:none}}
+.auth-tabs{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--br)}
+.auth-tab{padding:.85rem;text-align:center;font-family:'Space Grotesk',sans-serif;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--g2);cursor:pointer;transition:all .25s;background:transparent;border:none;position:relative}
+.auth-tab.act{color:var(--lime)}
+.auth-tab.act::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--limeg)}
+.auth-body{padding:1.8rem}
+.auth-brand{text-align:center;margin-bottom:1.4rem}
+.auth-logo{font-family:'Outfit',sans-serif;font-size:1.5rem;font-weight:800;letter-spacing:.02em;background:var(--limeg);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.auth-tagline{font-size:.7rem;color:var(--g2);font-family:'Space Grotesk',sans-serif;margin-top:.2rem}
+.social-row{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:1rem}
+.social-btn{display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.6rem;border-radius:8px;border:1px solid var(--br2);background:transparent;color:var(--w);font-family:'Space Grotesk',sans-serif;font-size:.72rem;cursor:pointer;transition:all .22s}
+.social-btn:hover{border-color:var(--br3);background:var(--s2)}
+.auth-or{display:flex;align-items:center;gap:.8rem;margin-bottom:1rem}
+.auth-or-line{flex:1;height:1px;background:var(--br)}
+.auth-or-txt{font-size:.62rem;color:var(--g2);font-family:'Space Grotesk',sans-serif;text-transform:uppercase;letter-spacing:.08em}
+.auth-form{display:flex;flex-direction:column;gap:.65rem}
+.auth-field{display:flex;flex-direction:column;gap:.3rem}
+.auth-label{font-size:.64rem;font-family:'Space Grotesk',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--g2)}
+.auth-input-wrap{position:relative;display:flex;align-items:center}
+.auth-input{width:100%;background:var(--s2);border:1px solid var(--br2);border-radius:9px;padding:.62rem .9rem .62rem 2.4rem;font-family:'Space Grotesk',sans-serif;font-size:.8rem;color:var(--w);outline:none;transition:border-color .2s,background .2s}
+.auth-input:focus{border-color:rgba(200,255,0,.45);background:var(--s3)}
+.auth-input::placeholder{color:var(--g2)}
+.auth-input-icon{position:absolute;left:.78rem;color:var(--g2);pointer-events:none;display:flex;align-items:center}
+.pw-toggle{position:absolute;right:.75rem;color:var(--g2);cursor:pointer;background:none;border:none;padding:0;display:flex;align-items:center;transition:color .2s}
+.pw-toggle:hover{color:var(--lime)}
+.auth-row{display:grid;grid-template-columns:1fr 1fr;gap:.55rem}
+.auth-submit{width:100%;padding:.82rem;border-radius:10px;background:var(--limeg);border:none;font-family:'Space Grotesk',sans-serif;font-size:.82rem;letter-spacing:.07em;text-transform:uppercase;color:#0c0c0c;cursor:pointer;transition:all .25s;margin-top:.2rem}
+.auth-submit:hover{filter:brightness(1.1);transform:translateY(-2px);box-shadow:0 10px 28px rgba(200,255,0,.28)}
+.auth-foot{text-align:center;margin-top:.9rem;font-size:.68rem;color:var(--g2);font-family:'Space Grotesk',sans-serif}
+.auth-foot a{color:var(--lime);cursor:pointer}
+.auth-foot a:hover{text-decoration:underline}
+.auth-msg{padding:.55rem .85rem;border-radius:7px;font-size:.73rem;font-family:'Space Grotesk',sans-serif;margin-bottom:.6rem;display:none}
+.auth-msg.err{background:rgba(255,61,87,.1);border:1px solid rgba(255,61,87,.3);color:#ff3d57;display:flex;align-items:center;gap:.5rem}
+.auth-msg.ok{background:rgba(200,255,0,.1);border:1px solid rgba(200,255,0,.3);color:var(--lime);display:flex;align-items:center;gap:.5rem}
+.auth-check-row{display:flex;align-items:flex-start;gap:.55rem}
+.auth-check{width:14px;height:14px;border-radius:3px;accent-color:var(--lime);flex-shrink:0;margin-top:3px;cursor:pointer}
+.auth-check-lbl{font-size:.68rem;color:var(--g2);font-family:'Space Grotesk',sans-serif;line-height:1.5}
+.auth-check-lbl a{color:var(--lime)}
+.auth-close{position:absolute;top:.9rem;right:.9rem;width:30px;height:30px;background:var(--s3);border:1px solid var(--br2);border-radius:7px;color:var(--g1);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;z-index:2}
+.auth-close:hover{background:var(--s4);color:var(--w)}
+.auth-panel{display:none}
+.auth-panel.show{display:block}
+.forgot-link{font-size:.65rem;color:var(--lime);font-family:'Space Grotesk',sans-serif;cursor:pointer;text-align:right;margin-top:-.2rem}
+.forgot-link:hover{text-decoration:underline}
+
+</style>
+</head>
+<body>
+
+<!-- MODALS -->
+<div class="modal" id="privModal">
+  <div class="m-overlay" onclick="closeModal('privModal')"></div>
+  <div class="m-box">
+    <div class="m-head">
+      <div class="m-title">Privacy Policy</div>
+      <button class="m-close" onclick="closeModal('privModal')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="m-body">
+      <p>Last updated: January 1, 2026. GRYNDEX ("we", "us") is committed to protecting your personal information.</p>
+      <h3>Information We Collect</h3>
+      <p>We collect information you provide directly: name, email, body metrics (weight, height, age), workout logs, and dietary preferences. We also collect usage data including workout frequency, app interactions, and device information.</p>
+      <h3>How We Use Your Information</h3>
+      <p>Your data is used exclusively to generate personalised workout plans, diet recommendations, and AI coaching responses. We do not sell your data to third parties. Your body metrics and health data are encrypted at rest and in transit.</p>
+      <h3>AI Coaching Data</h3>
+      <p>Conversations with the GRYNDEX AI coach are processed to generate responses. These conversations may be reviewed by our team to improve AI quality. You may request deletion of your conversation history at any time.</p>
+      <h3>Data Retention</h3>
+      <p>We retain your account data for as long as your account is active. Upon account deletion, your personal data is removed within 30 days. Anonymised aggregate data may be retained for analytical purposes.</p>
+      <h3>Contact Us</h3>
+      <p>For privacy-related requests, contact us at privacy@gryndex.app</p>
+    </div>
+  </div>
+</div>
+<div class="modal" id="termsModal">
+  <div class="m-overlay" onclick="closeModal('termsModal')"></div>
+  <div class="m-box">
+    <div class="m-head">
+      <div class="m-title">Terms &amp; Conditions</div>
+      <button class="m-close" onclick="closeModal('termsModal')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="m-body">
+      <p>By using GRYNDEX, you agree to these Terms. Please read them carefully.</p>
+      <h3>Use of Service</h3>
+      <p>GRYNDEX provides AI-generated fitness and nutrition guidance for informational purposes only. Our AI coaching is not a substitute for professional medical advice, diagnosis, or treatment. Always consult your physician before starting a new fitness programme.</p>
+      <h3>Account Responsibility</h3>
+      <p>You are responsible for maintaining the confidentiality of your account credentials. You agree not to share your account or use the platform for commercial redistribution of content.</p>
+      <h3>Subscription & Billing</h3>
+      <p>Pro (₹499/month) and Elite (₹999/month) plans are billed monthly. You may cancel at any time; cancellation takes effect at the end of the current billing period. No refunds are issued for partial months.</p>
+      <h3>Intellectual Property</h3>
+      <p>All GRYNDEX content, AI models, design, and code are proprietary. You may not reproduce, distribute, or create derivative works without our written permission.</p>
+      <h3>Limitation of Liability</h3>
+      <p>GRYNDEX is not liable for any injury, health complication, or loss arising from use of our platform. Use at your own risk. We provide recommendations, not guarantees of results.</p>
+      <h3>Contact</h3>
+      <p>Questions? Reach us at legal@gryndex.app</p>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div class="auth-modal" id="authModal">
+  <div class="auth-overlay" onclick="closeAuth()"></div>
+  <div class="auth-box">
+    <button class="auth-close" onclick="closeAuth()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="auth-tabs">
+      <button class="auth-tab act" id="loginTab" onclick="switchAuth('login')">Log In</button>
+      <button class="auth-tab" id="registerTab" onclick="switchAuth('register')">Register</button>
+    </div>
+    <div class="auth-body">
+      <div class="auth-brand">
+        <div class="auth-logo">GRYNDEX</div>
+        <div class="auth-tagline" id="authTagline">Welcome back — pick up where you left off</div>
+      </div>
+      <div class="social-row">
+        <button class="social-btn" onclick="socialAuth('Google')">
+          <svg width="14" height="14" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+          Google
+        </button>
+        <button class="social-btn" onclick="socialAuth('Apple')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+          Apple
+        </button>
+      </div>
+      <div class="auth-or"><div class="auth-or-line"></div><div class="auth-or-txt">or continue with email</div><div class="auth-or-line"></div></div>
+
+      <!-- LOGIN -->
+      <div class="auth-panel show" id="loginPanel">
+        <div class="auth-msg" id="loginMsg"></div>
+        <div class="auth-form">
+          <div class="auth-field">
+            <div class="auth-label">Email Address</div>
+            <div class="auth-input-wrap">
+              <div class="auth-input-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+              <input class="auth-input" id="loginEmail" type="email" placeholder="you@example.com" />
+            </div>
+          </div>
+          <div class="auth-field">
+            <div class="auth-label">Password</div>
+            <div class="auth-input-wrap">
+              <div class="auth-input-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+              <input class="auth-input" id="loginPw" type="password" placeholder="Your password" />
+              <button class="pw-toggle" onclick="togglePw('loginPw',this)" type="button"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+            </div>
+          </div>
+          <div class="forgot-link" onclick="forgotPw()">Forgot password?</div>
+          <button class="auth-submit" onclick="doLogin()">Log In to GRYNDEX</button>
+        </div>
+        <div class="auth-foot">No account? <a onclick="switchAuth('register')">Register free</a></div>
+      </div>
+
+      <!-- REGISTER -->
+      <div class="auth-panel" id="registerPanel">
+        <div class="auth-msg" id="registerMsg"></div>
+        <div class="auth-form">
+          <div class="auth-row">
+            <div class="auth-field">
+              <div class="auth-label">First Name</div>
+              <div class="auth-input-wrap">
+                <div class="auth-input-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+                <input class="auth-input" id="regFirst" type="text" placeholder="Arjun" />
+              </div>
+            </div>
+            <div class="auth-field">
+              <div class="auth-label">Last Name</div>
+              <div class="auth-input-wrap">
+                <div class="auth-input-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+                <input class="auth-input" id="regLast" type="text" placeholder="Kapoor" />
+              </div>
+            </div>
+          </div>
+          <div class="auth-field">
+            <div class="auth-label">Email Address</div>
+            <div class="auth-input-wrap">
+              <div class="auth-input-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+              <input class="auth-input" id="regEmail" type="email" placeholder="you@example.com" />
+            </div>
+          </div>
+          <div class="auth-field">
+            <div class="auth-label">Password</div>
+            <div class="auth-input-wrap">
+              <div class="auth-input-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+              <input class="auth-input" id="regPw" type="password" placeholder="Min 8 characters" />
+              <button class="pw-toggle" onclick="togglePw('regPw',this)" type="button"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+            </div>
+          </div>
+          <div class="auth-field">
+            <div class="auth-label">Confirm Password</div>
+            <div class="auth-input-wrap">
+              <div class="auth-input-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+              <input class="auth-input" id="regPw2" type="password" placeholder="Repeat password" />
+            </div>
+          </div>
+          <div class="auth-check-row">
+            <input class="auth-check" type="checkbox" id="agreeCheck" />
+            <label class="auth-check-lbl" for="agreeCheck">I agree to the <a onclick="closeAuth();setTimeout(()=>openModal('termsModal'),200)">Terms</a> and <a onclick="closeAuth();setTimeout(()=>openModal('privModal'),200)">Privacy Policy</a></label>
+          </div>
+          <button class="auth-submit" onclick="doRegister()">Create My GRYNDEX Account</button>
+        </div>
+        <div class="auth-foot">Already have an account? <a onclick="switchAuth('login')">Log in</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">GRYN<em>D</em>EX</div>
+  <div class="nav-c">
+    <a href="#features">Features</a>
+    <a href="#workout">Workout</a>
+    <a href="#coach">AI Coach</a>
+    <a href="#pricing">Pricing</a>
+  </div>
+  <div class="nav-r">
+    <button class="nb" onclick="openAuth('login')">Log in</button>
+    <button class="nb p" onclick="openAuth('register')">Start free</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg-grad"></div>
+  <div class="hero-noise"></div>
+  <div class="gym-blob gb1"></div>
+  <div class="gym-blob gb2"></div>
+  <div class="gym-blob gb3"></div>
+  <div class="scanlines"></div>
+  <div class="hero-inner">
+
+    <!-- LEFT: TEXT -->
+    <div class="hero-l">
+      <div class="h-tag"><span class="td"></span>AI Coach — Live Now</div>
+      <h1 class="h1">
+        <span class="h1-line h1-w">VOLUME</span>
+        <span class="h1-line h1-w">UP YOUR</span>
+        <span class="h1-line h1-lime">BODY</span>
+        <span class="h1-line h1-ghost">GOALS.</span>
+      </h1>
+      <p class="h-sub">GRYNDEX is India's most advanced AI gym coach. Personalised plans, diet precision, and a coach that never sleeps — built for those who don't quit.</p>
+      <div class="hero-btns">
+        <button class="btn-grad" onclick="openAuth('register')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5,3 19,12 5,21"/></svg>
+          Start Building Your Body
+        </button>
+        <button class="btn-line" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">See How It Works</button>
+      </div>
+
+      <!-- App store badges -->
+      <div class="app-badges">
+        <button class="app-badge" onclick="openAuth('register')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+          <div><div class="ab-sub">Download on the</div><div class="ab-main">App Store</div></div>
+        </button>
+        <button class="app-badge" onclick="openAuth('register')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3.18 23.5a1 1 0 01-1.18-1V1.5A1 1 0 013.18.5l11 11-11 12z" fill="#4CAF50"/><path d="M17.82 14.5l-2.64 1.5-2.64-3 2.64-3 2.64 1.5a1 1 0 010 3z" fill="#FFC107"/><path d="M3.18 23.5l11.82-6.5-2.64-3-9.18 9.5z" fill="#F44336"/><path d="M3.18.5l9.18 9.5 2.64-3L3.18.5z" fill="#2196F3"/></svg>
+          <div><div class="ab-sub">Get it on</div><div class="ab-main">Google Play</div></div>
+        </button>
+      </div>
+
+      <div class="h-trust">
+        <div class="avs">
+          <div class="av a1">AK</div><div class="av a2">SR</div>
+          <div class="av a3">VP</div><div class="av a4">RJ</div>
+        </div>
+        <div class="trust-t"><strong>2,400+</strong> athletes already grinding</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: 3D PHONE + STAT PILLS -->
+    <div class="hero-r">
+      <!-- 3D Phone Mockup -->
+      <div class="phone3d-scene">
+        <div class="phone3d">
+          <div class="phone3d-frame">
+            <!-- Screen content -->
+            <div class="phone3d-screen">
+              <div class="p3-top">
+                <div class="p3-notch"></div>
+              </div>
+              <div class="p3-inner">
+                <div class="p3-header">
+                  <div>
+                    <div class="p3-greet">GOOD MORNING,</div>
+                    <div class="p3-name">ARJUN</div>
+                  </div>
+                  <div class="p3-av">AK</div>
+                </div>
+                <!-- Ring stats -->
+                <div class="p3-rings-row">
+                  <svg width="64" height="64" viewBox="0 0 64 64">
+                    <circle cx="32" cy="32" r="26" fill="none" stroke="rgba(200,255,0,.15)" stroke-width="8"/>
+                    <circle cx="32" cy="32" r="26" fill="none" stroke="#C8FF00" stroke-width="8" stroke-dasharray="163.4" stroke-dashoffset="41" stroke-linecap="round" transform="rotate(-90 32 32)"/>
+                    <circle cx="32" cy="32" r="17" fill="none" stroke="rgba(0,229,204,.15)" stroke-width="6"/>
+                    <circle cx="32" cy="32" r="17" fill="none" stroke="#00E5CC" stroke-width="6" stroke-dasharray="106.8" stroke-dashoffset="32" stroke-linecap="round" transform="rotate(-90 32 32)"/>
+                    <circle cx="32" cy="32" r="9" fill="none" stroke="rgba(255,184,48,.2)" stroke-width="5"/>
+                    <circle cx="32" cy="32" r="9" fill="none" stroke="#FFB830" stroke-width="5" stroke-dasharray="56.5" stroke-dashoffset="18" stroke-linecap="round" transform="rotate(-90 32 32)"/>
+                  </svg>
+                  <div class="p3-ring-stats">
+                    <div class="p3-rs"><span style="color:#C8FF00">580</span><small>KCAL</small></div>
+                    <div class="p3-rs"><span style="color:#00E5CC">42</span><small>MIN</small></div>
+                    <div class="p3-rs"><span style="color:#FFB830">123</span><small>BPM</small></div>
+                  </div>
+                </div>
+                <!-- Today's plan card -->
+                <div class="p3-plan">
+                  <div class="p3-plan-tag">TODAY'S GRIND</div>
+                  <div class="p3-plan-title">CHEST WORKOUT</div>
+                  <div class="p3-plan-meta">6 exercises &nbsp;·&nbsp; 45 min</div>
+                  <div class="p3-plan-btn">START</div>
+                </div>
+                <!-- AI bubble -->
+                <div class="p3-ai">
+                  <div class="p3-ai-dot"></div>
+                  <div class="p3-ai-text">"Push heavy today. Recovery score: 94/100"</div>
+                </div>
+                <!-- Progress mini bars -->
+                <div class="p3-prog">
+                  <div class="p3-prog-row"><span>Strength</span><div class="p3-bar"><div class="p3-fill" style="width:82%"></div></div></div>
+                  <div class="p3-prog-row"><span>Consistency</span><div class="p3-bar"><div class="p3-fill" style="width:91%;background:#00E5CC"></div></div></div>
+                </div>
+                <!-- Bottom nav -->
+                <div class="p3-nav">
+                  <div class="p3-nav-item active-nav">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C8FF00" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+                  </div>
+                  <div class="p3-nav-item">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  </div>
+                  <div class="p3-nav-item">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>
+                  </div>
+                  <div class="p3-nav-item">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Phone side/edge -->
+          <div class="phone3d-side-r"></div>
+          <div class="phone3d-side-b"></div>
+        </div>
+        <!-- Glow under phone -->
+        <div class="phone3d-glow"></div>
+
+        <!-- Floating notification cards -->
+        <div class="notif-card nc1">
+          <div class="nc-icon" style="background:rgba(200,255,0,.15)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C8FF00" stroke-width="2"><polyline points="23,6 13.5,15.5 8.5,10.5 1,18"/></svg>
+          </div>
+          <div><div class="nc-val">+14%</div><div class="nc-lbl">Strength this month</div></div>
+        </div>
+        <div class="notif-card nc2">
+          <div class="nc-icon" style="background:rgba(0,229,204,.12)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#00E5CC" stroke-width="2"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+          </div>
+          <div><div class="nc-val" style="color:#00E5CC">21</div><div class="nc-lbl">Day streak</div></div>
+        </div>
+        <div class="notif-card nc3">
+          <div class="nc-icon" style="background:rgba(255,184,48,.12)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFB830" stroke-width="2"><path d="M12 2c-4 6-6 9-6 12a6 6 0 0012 0c0-3-2-6-6-12z"/></svg>
+          </div>
+          <div><div class="nc-val" style="color:#FFB830">3.1k</div><div class="nc-lbl">Kcal burned</div></div>
+        </div>
+      </div>
+
+      <!-- Stat pills (click to expand) -->
+      <div class="stat-pills">
+        <div class="s-pill" id="sp1">
+          <div class="s-pill-top">
+            <div class="sp-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C8FF00" stroke-width="2"><polyline points="23,6 13.5,15.5 8.5,10.5 1,18"/><polyline points="17,6 23,6 23,12"/></svg></div>
+            <div class="sp-main"><div class="sp-val green">+14%</div><div class="sp-lbl">Strength Gain</div></div>
+            <div class="sp-arr"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 12,15 18,9"/></svg></div>
+          </div>
+          <div class="sp-expand">
+            <div class="expand-label">Weekly Strength Progress</div>
+            <div class="mini-bars-h">
+              <div class="mb" style="height:40%"></div><div class="mb" style="height:55%"></div>
+              <div class="mb med" style="height:65%"></div><div class="mb" style="height:70%"></div>
+              <div class="mb hi" style="height:85%"></div><div class="mb" style="height:90%"></div>
+              <div class="mb hi" style="height:100%"></div>
+            </div>
+            <div class="mini-week"><div class="mwl">M</div><div class="mwl">T</div><div class="mwl">W</div><div class="mwl">T</div><div class="mwl">F</div><div class="mwl">S</div><div class="mwl">S</div></div>
+            <div class="expand-row">
+              <div class="er-item"><div class="er-val">82kg</div><div class="er-lbl">1RM Bench</div></div>
+              <div class="er-item"><div class="er-val">+6</div><div class="er-lbl">Total reps</div></div>
+              <div class="er-item"><div class="er-val">4wk</div><div class="er-lbl">Streak</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="s-pill" id="sp2">
+          <div class="s-pill-top">
+            <div class="sp-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00E5CC" stroke-width="2"><path d="M12 2c-4 6-6 9-6 12a6 6 0 0012 0c0-3-2-6-6-12z"/></svg></div>
+            <div class="sp-main"><div class="sp-val teal">3,115</div><div class="sp-lbl">Kcal Burned</div></div>
+            <div class="sp-arr"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 12,15 18,9"/></svg></div>
+          </div>
+          <div class="sp-expand">
+            <div class="expand-label">Daily Calorie Burn</div>
+            <div class="mini-bars-h">
+              <div class="mb" style="height:38%;background:#00E5CC;opacity:.4"></div>
+              <div class="mb" style="height:80%;background:#00E5CC"></div>
+              <div class="mb" style="height:45%;background:#00E5CC;opacity:.4"></div>
+              <div class="mb" style="height:62%;background:#00E5CC;opacity:.6"></div>
+              <div class="mb" style="height:20%;background:#00E5CC;opacity:.3"></div>
+              <div class="mb" style="height:55%;background:#00E5CC;opacity:.5"></div>
+              <div class="mb" style="height:72%;background:#00E5CC;opacity:.7"></div>
+            </div>
+            <div class="mini-week"><div class="mwl">M</div><div class="mwl">T</div><div class="mwl">W</div><div class="mwl">T</div><div class="mwl">F</div><div class="mwl">S</div><div class="mwl">S</div></div>
+            <div class="expand-row">
+              <div class="er-item"><div class="er-val" style="color:var(--teal)">445</div><div class="er-lbl">Today</div></div>
+              <div class="er-item"><div class="er-val" style="color:var(--teal)">3,115</div><div class="er-lbl">This week</div></div>
+              <div class="er-item"><div class="er-val" style="color:var(--teal)">102</div><div class="er-lbl">Avg/day</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="s-pill" id="sp3">
+          <div class="s-pill-top">
+            <div class="sp-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFB830" stroke-width="2"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></div>
+            <div class="sp-main"><div class="sp-val amber">91%</div><div class="sp-lbl">Consistency</div></div>
+            <div class="sp-arr"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 12,15 18,9"/></svg></div>
+          </div>
+          <div class="sp-expand">
+            <div class="expand-label">21-Day Streak</div>
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:.6rem">
+              <div style="height:14px;border-radius:2px;background:var(--amber)"></div><div style="height:14px;border-radius:2px;background:var(--amber)"></div>
+              <div style="height:14px;border-radius:2px;background:var(--amber)"></div><div style="height:14px;border-radius:2px;background:rgba(255,184,48,.3)"></div>
+              <div style="height:14px;border-radius:2px;background:var(--amber)"></div><div style="height:14px;border-radius:2px;background:var(--amber)"></div>
+              <div style="height:14px;border-radius:2px;background:var(--amber)"></div><div style="height:14px;border-radius:2px;background:var(--amber)"></div>
+              <div style="height:14px;border-radius:2px;background:var(--amber)"></div><div style="height:14px;border-radius:2px;background:var(--amber)"></div>
+              <div style="height:14px;border-radius:2px;background:var(--amber)"></div><div style="height:14px;border-radius:2px;background:rgba(255,184,48,.3)"></div>
+              <div style="height:14px;border-radius:2px;background:var(--amber)"></div><div style="height:14px;border-radius:2px;background:var(--amber)"></div>
+            </div>
+            <div class="expand-row">
+              <div class="er-item"><div class="er-val" style="color:var(--amber)">21</div><div class="er-lbl">Day Streak</div></div>
+              <div class="er-item"><div class="er-val" style="color:var(--amber)">19</div><div class="er-lbl">Sessions</div></div>
+              <div class="er-item"><div class="er-val" style="color:var(--amber)">#4</div><div class="er-lbl">City Rank</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS STRIP -->
+<div class="strip">
+  <div class="s-item rv rv-d1"><div class="s-n" data-target="500" data-suf="+">0+</div><div class="s-l">Exercises</div></div>
+  <div class="s-item rv rv-d2"><div class="s-n">24/7</div><div class="s-l">AI Online</div></div>
+  <div class="s-item rv rv-d3"><div class="s-n" data-target="2400" data-suf="+">0+</div><div class="s-l">Athletes</div></div>
+  <div class="s-item rv rv-d4"><div class="s-n">3x</div><div class="s-l">Faster Results</div></div>
+  <div class="s-item rv rv-d5"><div class="s-n">&#x20B9;0</div><div class="s-l">To Start</div></div>
+</div>
+
+<!-- FEATURES -->
+<section class="sec" id="features">
+  <div class="ey rv">What You Get</div>
+  <div class="sh rv">BUILT FOR<br>THE <span class="gr">RELENTLESS.</span></div>
+  <div class="bento">
+    <div class="fc fc1 rv rv-d1">
+      <div class="fn">01</div>
+      <div class="fi"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C8FF00" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+      <div class="ft">AI Workout Generator</div>
+      <div class="fd">Enter your goal, body, equipment. GRYNDEX builds your complete week plan in seconds — adapts every week as you progress.</div>
+      <div class="mc">
+        <div class="mcb">
+          <div class="mcbar dim" style="height:60%"></div><div class="mcbar dim" style="height:40%"></div>
+          <div class="mcbar lit" style="height:80%"></div><div class="mcbar dim" style="height:55%"></div>
+          <div class="mcbar dim" style="height:70%"></div><div class="mcbar lit" style="height:92%"></div>
+          <div class="mcbar dim" style="height:65%"></div>
+        </div>
+        <div class="mcl"><div class="mclbl">Mon</div><div class="mclbl">Tue</div><div class="mclbl">Wed</div><div class="mclbl">Thu</div><div class="mclbl">Fri</div><div class="mclbl">Sat</div><div class="mclbl">Sun</div></div>
+      </div>
+    </div>
+    <div class="fc fc2 rv rv-d2">
+      <div class="fn">02</div>
+      <div class="fi"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C8FF00" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg></div>
+      <div class="ft">AI Coach Chat</div>
+      <div class="fd">Ask anything. Expert answers instantly. Your coach never sleeps, never judges, never charges extra.</div>
+    </div>
+    <div class="fc fc3 rv rv-d3">
+      <div class="fn">03</div>
+      <div class="fi"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C8FF00" stroke-width="2"><path d="M12 2c-4 6-6 9-6 12a6 6 0 0012 0c0-3-2-6-6-12z"/></svg></div>
+      <div class="ft">Diet Precision</div>
+      <div class="fd">Indian meals. Custom macros. Built for your exact body and goal.</div>
+    </div>
+    <div class="fc fc4 rv rv-d1">
+      <div class="fn">04</div>
+      <div class="fi"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C8FF00" stroke-width="2"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg></div>
+      <div class="ft">Progress Intelligence</div>
+      <div class="fd">Track weight, reps, measurements. Your GRYNDEX score rises every week. Watch data prove your discipline.</div>
+      <div class="prs">
+        <div class="pr"><div class="prn">Strength</div><div class="prt"><div class="prf" data-w="82"></div></div><div class="prp">82%</div></div>
+        <div class="pr"><div class="prn">Endurance</div><div class="prt"><div class="prf" data-w="67"></div></div><div class="prp">67%</div></div>
+        <div class="pr"><div class="prn">Consistency</div><div class="prt"><div class="prf" data-w="91"></div></div><div class="prp">91%</div></div>
+        <div class="pr"><div class="prn">Nutrition</div><div class="prt"><div class="prf" data-w="74"></div></div><div class="prp">74%</div></div>
+      </div>
+    </div>
+    <div class="fc fc5 rv rv-d2">
+      <div class="fn">05</div>
+      <div class="fi"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C8FF00" stroke-width="2"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg></div>
+      <div class="ft">Elite Challenges</div>
+      <div class="fd">Weekly AI-generated challenges. Compete. Rank up on the GRYNDEX Elite board. Be the best in your city.</div>
+    </div>
+  </div>
+</section>
+
+<!-- WORKOUT -->
+<section class="wk-sec" id="workout">
+  <div class="wk-grid">
+    <div class="rvl">
+      <div class="ey">Today's Plan</div>
+      <div class="sh" style="margin-bottom:1.2rem">CHEST<br><span class="gr">WORKOUT</span></div>
+      <div class="tabs" id="muscTabs">
+        <button class="tab on" data-m="chest">Chest</button>
+        <button class="tab" data-m="back">Back</button>
+        <button class="tab" data-m="legs">Legs</button>
+        <button class="tab" data-m="arms">Arms</button>
+        <button class="tab" data-m="shoulders">Shoulders</button>
+      </div>
+      <div class="ex-list" id="exList"></div>
+    </div>
+    <div class="rvr">
+      <div class="timer-box">
+        <div class="t-label">Rest Timer</div>
+        <div class="t-disp" id="tDisp">01:30</div>
+        <div class="t-ctrls">
+          <button class="tc rst" id="tRst">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1,4 1,10 7,10"/><path d="M3.51 15a9 9 0 1 0 .49-3.45"/></svg>
+          </button>
+          <button class="tc play" id="tPlay">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" id="tIcon"><polygon points="5,3 19,12 5,21"/></svg>
+          </button>
+        </div>
+        <div class="t-track"><div class="t-fill" id="tFill"></div></div>
+        <div class="t-stats">
+          <div class="ts-card"><div class="ts-val" id="tSets">4</div><div class="ts-lbl">Sets Done</div></div>
+          <div class="ts-card"><div class="ts-val" id="tReps">48</div><div class="ts-lbl">Total Reps</div></div>
+          <div class="ts-card"><div class="ts-val" id="tCal">0</div><div class="ts-lbl">Kcal</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AI COACH -->
+<section class="ai-sec" id="coach">
+  <div class="ey rv">AI Coach</div>
+  <div class="sh rv">YOUR COACH.<br><span class="gr">ALWAYS ON.</span></div>
+  <div class="ai-grid">
+    <div class="rvl">
+      <div class="chat-win">
+        <div class="ch-head">
+          <div class="ch-av"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0c0c0c" stroke-width="2.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
+          <div><div class="ch-name">GRYNDEX AI Coach</div><div class="ch-st"><span class="stdr"></span>Online — Responding instantly</div></div>
+        </div>
+        <div class="chat-bod" id="chatBod">
+          <div class="bub ai">Hey! Ready to crush today's chest workout? Your recovery score is 94 — you're primed to push heavy. What do you want to know?</div>
+        </div>
+        <div class="ch-foot">
+          <input class="ch-inp" id="chInp" placeholder="Ask your coach anything..." />
+          <button class="ch-send" id="chSend">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0c0c0c" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="rvr">
+      <div class="q-panel">
+        <div class="q-title">Quick Ask</div>
+        <button class="q-btn" data-q="What should I eat before today's workout?">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C8FF00" stroke-width="2"><path d="M12 2c-4 6-6 9-6 12a6 6 0 0012 0c0-3-2-6-6-12z"/></svg>
+          What should I eat before today's workout?
+        </button>
+        <button class="q-btn" data-q="How many sets should I do for chest?">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C8FF00" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          How many sets should I do for chest?
+        </button>
+        <button class="q-btn" data-q="My left shoulder hurts during bench press. What should I do?">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C8FF00" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          My shoulder hurts during bench. What do I do?
+        </button>
+        <button class="q-btn" data-q="Build me a 7-day workout plan for muscle gain">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C8FF00" stroke-width="2"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>
+          Build me a 7-day plan for muscle gain
+        </button>
+        <button class="q-btn" data-q="How much protein do I need daily?">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C8FF00" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          How much protein do I need daily?
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROGRESS -->
+<section class="prog-sec" id="progress">
+  <div class="ey rv">Your Data</div>
+  <div class="sh rv">DATA DOESN'T<br><span class="gr">LIE.</span></div>
+  <div class="prog-grid">
+    <div class="pg-card rv rv-d1">
+      <div class="pg-t">Weekly Calories Burned</div>
+      <div class="big-n counter2" data-target="3115">0</div>
+      <div class="big-l">kcal this week</div>
+      <div class="wk-ch">
+        <div class="wkb in" style="height:38%"></div><div class="wkb ac" style="height:80%"></div>
+        <div class="wkb in" style="height:55%"></div><div class="wkb in" style="height:65%"></div>
+        <div class="wkb in" style="height:20%"></div><div class="wkb in" style="height:42%"></div>
+        <div class="wkb in" style="height:68%"></div>
+      </div>
+    </div>
+    <div class="pg-card rv rv-d2">
+      <div class="pg-t">Body Composition</div>
+      <div class="dn-wrap">
+        <svg width="85" height="85" viewBox="0 0 85 85">
+          <circle cx="42.5" cy="42.5" r="33" fill="none" stroke="#2a2a2a" stroke-width="11"/>
+          <circle cx="42.5" cy="42.5" r="33" fill="none" stroke="url(#lg1)" stroke-width="11" stroke-dasharray="207.3" stroke-dashoffset="51.8" stroke-linecap="round" transform="rotate(-90 42.5 42.5)"/>
+          <circle cx="42.5" cy="42.5" r="33" fill="none" stroke="#00E5CC" stroke-width="11" stroke-dasharray="207.3" stroke-dashoffset="166" stroke-linecap="round" transform="rotate(-90 42.5 42.5)" opacity=".7"/>
+          <defs><linearGradient id="lg1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#C8FF00"/><stop offset="100%" stop-color="#80FF44"/></linearGradient></defs>
+          <text x="42.5" y="47" font-family="Bebas Neue,sans-serif" font-size="14" fill="white" text-anchor="middle" letter-spacing="1">75%</text>
+        </svg>
+        <div class="dn-stats">
+          <div class="dn-row"><div class="dn-dot" style="background:var(--lime)"></div><div class="dn-name">Muscle</div><div class="dn-val" style="color:var(--lime)">75%</div></div>
+          <div class="dn-row"><div class="dn-dot" style="background:#00E5CC"></div><div class="dn-name">Fat</div><div class="dn-val" style="color:#00E5CC">18%</div></div>
+          <div class="dn-row"><div class="dn-dot" style="background:var(--s4)"></div><div class="dn-name">Other</div><div class="dn-val" style="color:var(--g2)">7%</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="pg-card rv rv-d3">
+      <div class="pg-t">21-Day Streak</div>
+      <div class="big-n">21</div>
+      <div class="big-l">days consistent</div>
+      <div class="sk-grid" id="skGrid"></div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="price-sec" id="pricing">
+  <div class="ey rv">Pricing</div>
+  <div class="sh rv">PICK YOUR<br><span class="gr">LEVEL.</span></div>
+  <div class="p-grid">
+    <div class="pc rv rv-d1">
+      <div class="pc-tier">Starter</div>
+      <div class="pc-price">Free</div>
+      <div class="pc-per">Forever — no card needed</div>
+      <div class="pc-div"></div>
+      <ul class="pc-list">
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C8FF00" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>3 AI workout plans/month</li>
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C8FF00" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>Basic exercise library</li>
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C8FF00" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>Progress tracker</li>
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C8FF00" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>5 AI coach messages/day</li>
+      </ul>
+      <button class="pc-btn pcb-o" onclick="openAuth('register')">Get Started Free</button>
+    </div>
+    <div class="pc hot rv rv-d2">
+      <div class="pc-badge">Most Popular</div>
+      <div class="pc-tier">Pro</div>
+      <div class="pc-price">&#x20B9;499</div>
+      <div class="pc-per">per month — cancel anytime</div>
+      <div class="pc-div"></div>
+      <ul class="pc-list">
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C8FF00" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>Unlimited AI workout plans</li>
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C8FF00" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>Full AI diet plan (Indian meals)</li>
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C8FF00" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>Unlimited AI coach chat</li>
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C8FF00" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>Full exercise library (500+)</li>
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C8FF00" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>Advanced progress analytics</li>
+      </ul>
+      <button class="pc-btn pcb-g" onclick="openAuth('register')">Go Pro — &#x20B9;499/mo</button>
+    </div>
+    <div class="pc rv rv-d3">
+      <div class="pc-tier">Elite</div>
+      <div class="pc-price">&#x20B9;999</div>
+      <div class="pc-per">per month — for the serious</div>
+      <div class="pc-div"></div>
+      <ul class="pc-list">
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C8FF00" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>Everything in Pro</li>
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C8FF00" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>Priority AI responses</li>
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C8FF00" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>Elite leaderboard ranking</li>
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C8FF00" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>Body scan AI analysis</li>
+        <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C8FF00" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>Exclusive content drops</li>
+      </ul>
+      <button class="pc-btn pcb-o" onclick="openAuth('register')">Go Elite</button>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-band rv">
+  <div>
+    <div class="cta-h">STOP GUESSING.<br>START GRINDING.</div>
+    <div class="cta-p">Your AI coach is ready. Zero setup. Zero cost to start.</div>
+  </div>
+  <div class="cta-right">
+    <button class="btn-dark" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5,3 19,12 5,21"/></svg>
+      Start Building Free
+    </button>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="f-logo">GRYN<em>D</em>EX</div>
+  <div class="f-links">
+    <a href="#features">Features</a>
+    <a href="#pricing">Pricing</a>
+    <a href="#" onclick="openModal('privModal');return false">Privacy Policy</a>
+    <a href="#" onclick="openModal('termsModal');return false">Terms &amp; Conditions</a>
+  </div>
+  <div class="f-copy">© 2026 GRYNDEX. Built for the relentless.</div>
+</footer>
+
+<script>
+/* ══ MODAL ══ */
+function openModal(id){document.getElementById(id).classList.add('show');document.body.style.overflow='hidden'}
+function closeModal(id){document.getElementById(id).classList.remove('show');document.body.style.overflow=''}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.modal.show').forEach(m=>m.classList.remove('show'));document.body.style.overflow=''}});
+
+/* ══ SMOOTH COUNTER (RAF + ease-out-quart) ══ */
+function animCount(el,target,dur=1600){
+  const start=performance.now();
+  const suf=el.dataset.suf||'';
+  ;(function tick(now){
+    const p=Math.min((now-start)/dur,1);
+    const e=1-Math.pow(1-p,4);
+    const v=Math.round(target*e);
+    el.textContent=(v>=1000?v.toLocaleString():v)+suf;
+    if(p<1)requestAnimationFrame(tick);
+    else el.textContent=target.toLocaleString()+suf;
+  })(start);
+}
+
+/* ══ SCROLL OBSERVER ══ */
+const obs=new IntersectionObserver(entries=>{
+  entries.forEach(en=>{
+    if(!en.isIntersecting)return;
+    const t=en.target;
+    t.classList.add('vis');
+    t.querySelectorAll('[data-target]').forEach(el=>animCount(el,+el.dataset.target));
+    t.querySelectorAll('[data-target]').forEach(el=>el.removeAttribute('data-target'));
+    t.querySelectorAll('.prf[data-w]').forEach(bar=>{bar.style.width=bar.dataset.w+'%';bar.removeAttribute('data-w')});
+    t.querySelectorAll('.counter2[data-target]').forEach(el=>{animCount(el,+el.dataset.target);el.removeAttribute('data-target')});
+  });
+},{threshold:.15});
+document.querySelectorAll('.rv,.rvl,.rvr').forEach(el=>obs.observe(el));
+
+/* ══ STAT PILLS TOGGLE ══ */
+document.querySelectorAll('.s-pill').forEach(pill=>{
+  pill.addEventListener('click',()=>{
+    const wasOpen=pill.classList.contains('open');
+    document.querySelectorAll('.s-pill').forEach(p=>p.classList.remove('open'));
+    if(!wasOpen)pill.classList.add('open');
+  });
+});
+
+/* ══ WORKOUT DATA ══ */
+const WK={
+  chest:[{n:"Flat Bench Press",s:"4",r:"8–10 reps",rest:"90s"},{n:"Incline DB Press",s:"3",r:"10–12 reps",rest:"75s"},{n:"Cable Fly",s:"3",r:"12–15 reps",rest:"60s"},{n:"Push-Up Burnout",s:"2",r:"To Failure",rest:"60s"}],
+  back:[{n:"Deadlift",s:"4",r:"5–6 reps",rest:"120s"},{n:"Barbell Row",s:"4",r:"8–10 reps",rest:"90s"},{n:"Lat Pulldown",s:"3",r:"10–12 reps",rest:"75s"},{n:"Seated Cable Row",s:"3",r:"12–15 reps",rest:"60s"}],
+  legs:[{n:"Back Squat",s:"4",r:"6–8 reps",rest:"120s"},{n:"Romanian Deadlift",s:"3",r:"10–12 reps",rest:"90s"},{n:"Leg Press",s:"3",r:"12–15 reps",rest:"75s"},{n:"Calf Raise",s:"4",r:"15–20 reps",rest:"45s"}],
+  arms:[{n:"Barbell Curl",s:"4",r:"8–10 reps",rest:"75s"},{n:"Skull Crusher",s:"3",r:"10–12 reps",rest:"75s"},{n:"Hammer Curl",s:"3",r:"12–14 reps",rest:"60s"},{n:"Tricep Pushdown",s:"3",r:"12–15 reps",rest:"60s"}],
+  shoulders:[{n:"Overhead Press",s:"4",r:"8–10 reps",rest:"90s"},{n:"Lateral Raise",s:"3",r:"12–15 reps",rest:"60s"},{n:"Front Raise",s:"3",r:"12–15 reps",rest:"60s"},{n:"Rear Delt Fly",s:"3",r:"15 reps",rest:"45s"}],
+};
+function renderWK(tab){
+  const l=document.getElementById('exList');l.innerHTML='';
+  WK[tab].forEach((ex,i)=>{
+    const d=document.createElement('div');d.className='ex-card'+(i===0?' on':'');
+    d.innerHTML=`<div class="ex-n">0${i+1}</div><div class="ex-info"><div class="ex-name">${ex.n}</div><div class="ex-meta">${ex.r} &nbsp;·&nbsp; Rest ${ex.rest}</div></div><div class="ex-sets">${ex.s}<span style="font-size:.65rem;color:var(--g2);font-family:Inter"> sets</span></div>`;
+    d.onclick=()=>{document.querySelectorAll('.ex-card').forEach(c=>c.classList.remove('on'));d.classList.add('on')};
+    l.appendChild(d);
+  });
+}
+document.querySelectorAll('#muscTabs .tab').forEach(btn=>{
+  btn.onclick=()=>{document.querySelectorAll('#muscTabs .tab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderWK(btn.dataset.m)};
+});
+renderWK('chest');
+
+/* ══ TIMER ══ */
+let tot=90,cur=90,run=false,iv=null,sets=4,reps=48,cals=0;
+const tD=document.getElementById('tDisp'),tF=document.getElementById('tFill');
+const fmt=s=>`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+function updT(){tD.textContent=fmt(cur);tF.style.width=((tot-cur)/tot*100)+'%'}
+document.getElementById('tPlay').onclick=()=>{
+  if(run){clearInterval(iv);run=false;tD.classList.remove('go');document.getElementById('tIcon').innerHTML='<polygon points="5,3 19,12 5,21"/>';}
+  else{run=true;tD.classList.add('go');document.getElementById('tIcon').innerHTML='<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+    iv=setInterval(()=>{if(cur<=0){clearInterval(iv);run=false;tD.classList.remove('go');document.getElementById('tIcon').innerHTML='<polygon points="5,3 19,12 5,21"/>';cur=tot;updT();sets++;reps+=12;cals+=Math.round(8+Math.random()*5);document.getElementById('tSets').textContent=sets;document.getElementById('tReps').textContent=reps;document.getElementById('tCal').textContent=cals;}else{cur--;updT();}},1000);}
+};
+document.getElementById('tRst').onclick=()=>{clearInterval(iv);run=false;cur=tot;tD.classList.remove('go');document.getElementById('tIcon').innerHTML='<polygon points="5,3 19,12 5,21"/>';updT()};
+updT();
+
+/* ══ AI CHAT ══ */
+const AIR={
+  "eat before":"Great question! 60–90 mins before chest day: 2 rotis + paneer bhurji OR oats with banana + whey scoop. Target 40–50g carbs + 25g protein. Avoid heavy fats — they slow digestion and kill your pump.",
+  "sets":"For hypertrophy, target 12–20 working sets per week for chest. Today's plan: 12 sets — spot on. Keep reps 8–12, rest 60–90s. Progressive overload rule: add 2.5kg when you nail the top rep range for 2 sessions straight.",
+  "shoulder":"Stop if there's sharp pain. Three fixes: 1) Widen grip slightly, 2) Keep elbows at 60–70° (not flared), 3) Retract shoulder blades before lifting. Switch to DB press — far more shoulder-friendly. Pain beyond 3 days? See a physio.",
+  "7-day":"Your GRYNDEX 7-day split:\nDay 1 — Chest + Triceps\nDay 2 — Back + Biceps\nDay 3 — Legs + Glutes\nDay 4 — REST / Light cardio\nDay 5 — Shoulders + Traps\nDay 6 — Arms + Core\nDay 7 — Full REST\nWant me to detail any day?",
+  "protein":"Target 1.6–2.2g per kg of bodyweight daily. 75kg = 120–165g protein/day. Best Indian sources: paneer (18g/100g), eggs (6g/egg), chicken breast (31g/100g), dal (9g/cup cooked), whey (25g/scoop). Spread across 4–5 meals for best absorption.",
+};
+function getResp(msg){
+  const m=msg.toLowerCase();
+  for(const[k,v]of Object.entries(AIR)){if(m.includes(k.split(' ')[0])||m.includes(k.split(' ')[1]||'~~'))return v;}
+  const fb=["Progressive overload is your best friend. Add 2.5–5% weight when you complete all reps with perfect form two sessions in a row.","Your recovery score today is 94 — optimal to push heavy. Don't leave gains on the table.","Consistency beats perfection. 5 sessions/week for 6 months beats any 'perfect' programme followed for 3 weeks.","Focus on mind-muscle connection — feel the target muscle contract on every rep. Quality reps build more muscle than sloppy volume."];
+  return fb[Math.floor(Math.random()*fb.length)];
+}
+function addBub(text,type){const cb=document.getElementById('chatBod');const d=document.createElement('div');d.className='bub '+type;d.textContent=text;cb.appendChild(d);cb.scrollTop=cb.scrollHeight}
+function addTyp(){const cb=document.getElementById('chatBod');const d=document.createElement('div');d.className='bub ai ty';d.id='typBub';d.innerHTML='<div class="ty-dots"><span></span><span></span><span></span></div>';cb.appendChild(d);cb.scrollTop=cb.scrollHeight;return d}
+function sendMsg(text){if(!text.trim())return;addBub(text,'me');const ty=addTyp();setTimeout(()=>{ty.remove();addBub(getResp(text),'ai')},700+Math.random()*500)}
+document.getElementById('chSend').onclick=()=>{const i=document.getElementById('chInp');sendMsg(i.value);i.value=''};
+document.getElementById('chInp').addEventListener('keydown',e=>{if(e.key==='Enter'){const i=e.target;sendMsg(i.value);i.value=''}});
+document.querySelectorAll('.q-btn').forEach(b=>b.onclick=()=>sendMsg(b.dataset.q));
+
+/* ══ STREAK ══ */
+const sk=document.getElementById('skGrid');
+[1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,1,1,0,1,1,1].forEach(d=>{const el=document.createElement('div');el.className='sk-d '+(d===1?'sk-on':d===2?'sk-half':'sk-off');el.title=d===1?'Completed':'Rest day';sk.appendChild(el)});
+
+/* ══ AUTH MODAL ══ */
+function openAuth(mode){
+  document.getElementById('authModal').classList.add('show');
+  document.body.style.overflow='hidden';
+  switchAuth(mode||'login');
+}
+function closeAuth(){
+  document.getElementById('authModal').classList.remove('show');
+  document.body.style.overflow='';
+}
+function switchAuth(mode){
+  const isLogin=mode==='login';
+  document.getElementById('loginTab').classList.toggle('act',isLogin);
+  document.getElementById('registerTab').classList.toggle('act',!isLogin);
+  document.getElementById('loginPanel').classList.toggle('show',isLogin);
+  document.getElementById('registerPanel').classList.toggle('show',!isLogin);
+  document.getElementById('authTagline').textContent=isLogin
+    ?'Welcome back — pick up where you left off'
+    :'Join 2,400+ athletes already grinding';
+  clearMsgs();
+}
+function clearMsgs(){
+  ['loginMsg','registerMsg'].forEach(id=>{const el=document.getElementById(id);if(el){el.className='auth-msg';el.textContent=''}});
+}
+function showMsg(id,text,type){
+  const el=document.getElementById(id);if(!el)return;
+  el.className='auth-msg '+(type==='ok'?'ok':'err');
+  el.textContent=text;
+}
+function togglePw(id,btn){
+  const inp=document.getElementById(id);
+  const isText=inp.type==='text';
+  inp.type=isText?'password':'text';
+  btn.style.color=isText?'var(--g2)':'var(--lime)';
+}
+function forgotPw(){
+  const email=document.getElementById('loginEmail').value.trim();
+  if(!email){showMsg('loginMsg','Enter your email first','err');return;}
+  showMsg('loginMsg','Reset link sent to '+email+' — check your inbox','ok');
+}
+function socialAuth(provider){
+  const activePanel=document.getElementById('loginPanel').classList.contains('show')?'loginMsg':'registerMsg';
+  showMsg(activePanel,provider+' sign-in coming soon — use email below','err');
+}
+function doLogin(){
+  const email=document.getElementById('loginEmail').value.trim();
+  const pw=document.getElementById('loginPw').value;
+  if(!email||!email.includes('@')){showMsg('loginMsg','Enter a valid email address','err');return;}
+  if(pw.length<6){showMsg('loginMsg','Password must be at least 6 characters','err');return;}
+  const btn=document.querySelector('#loginPanel .auth-submit');
+  btn.textContent='Logging in...';btn.style.opacity='.7';btn.disabled=true;
+  setTimeout(()=>{
+    btn.textContent='Log In to GRYNDEX';btn.style.opacity='1';btn.disabled=false;
+    showMsg('loginMsg','Welcome back! Redirecting to your dashboard...','ok');
+    setTimeout(closeAuth,1800);
+  },1300);
+}
+function doRegister(){
+  const first=document.getElementById('regFirst').value.trim();
+  const last=document.getElementById('regLast').value.trim();
+  const email=document.getElementById('regEmail').value.trim();
+  const pw=document.getElementById('regPw').value;
+  const pw2=document.getElementById('regPw2').value;
+  const agreed=document.getElementById('agreeCheck').checked;
+  if(!first||!last){showMsg('registerMsg','Enter your full name','err');return;}
+  if(!email||!email.includes('@')){showMsg('registerMsg','Enter a valid email address','err');return;}
+  if(pw.length<8){showMsg('registerMsg','Password must be at least 8 characters','err');return;}
+  if(pw!==pw2){showMsg('registerMsg','Passwords do not match','err');return;}
+  if(!agreed){showMsg('registerMsg','Please agree to the Terms & Privacy Policy','err');return;}
+  const btn=document.querySelector('#registerPanel .auth-submit');
+  btn.textContent='Creating your account...';btn.style.opacity='.7';btn.disabled=true;
+  setTimeout(()=>{
+    btn.textContent='Create My GRYNDEX Account';btn.style.opacity='1';btn.disabled=false;
+    showMsg('registerMsg','Account created! Welcome to GRYNDEX, '+first+'!','ok');
+    setTimeout(closeAuth,2000);
+  },1500);
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    document.querySelectorAll('.modal.show,.auth-modal.show').forEach(m=>m.classList.remove('show'));
+    document.body.style.overflow='';
+  }
+});
+</script>
+</body>
+</html>
