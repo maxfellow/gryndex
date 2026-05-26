@@ -1243,9 +1243,25 @@ function forgotPw(){
   if(!email){showMsg('loginMsg','Enter your email first','err');return;}
   showMsg('loginMsg','Reset link sent to '+email+' — check your inbox','ok');
 }
-function socialAuth(provider){
-  const activePanel=document.getElementById('loginPanel').classList.contains('show')?'loginMsg':'registerMsg';
-  showMsg(activePanel,provider+' sign-in coming soon — use email below','err');
+async function socialAuth(provider){
+  if(provider==='Apple'){
+    const activePanel=document.getElementById('loginPanel').classList.contains('show')?'loginMsg':'registerMsg';
+    showMsg(activePanel,'Apple sign-in coming soon','err');
+    return;
+  }
+  try{
+    const{error}=await sb.auth.signInWithOAuth({
+      provider:'google',
+      options:{redirectTo:'https://gryndex.vercel.app'}
+    });
+    if(error){
+      const activePanel=document.getElementById('loginPanel').classList.contains('show')?'loginMsg':'registerMsg';
+      showMsg(activePanel,'Google error: '+error.message,'err');
+    }
+  }catch(e){
+    const activePanel=document.getElementById('loginPanel').classList.contains('show')?'loginMsg':'registerMsg';
+    showMsg(activePanel,'Google sign-in failed. Try email.','err');
+  }
 }
 function doLogin(){
   const email=document.getElementById('loginEmail').value.trim();
