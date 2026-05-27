@@ -2193,22 +2193,71 @@ function endWorkout(){
   document.getElementById('wmComplete').classList.remove('show');
 }
 
-// ══ AI COACH ══
-const DB_AIR={
-  'meal':'Pre-workout (90 min before): 2 rotis + paneer OR oats + banana + whey. Target 40–50g carbs + 25g protein. Avoid heavy fats before training.',
-  'protein':'Target 1.6–2.2g per kg bodyweight daily. 75kg = 120–165g/day. Best Indian sources: paneer (18g/100g), chicken (31g/100g), eggs (6g each), dal (9g/cup), whey (25g/scoop).',
-  'bench':'Bench press form: grip slightly wider than shoulders, elbows at 60–70° (not flared), retract shoulder blades before lifting, 3-second controlled negative. Touch chest lightly, drive hard.',
-  '7-day':'Your GRYNDEX split:\nMon — Chest + Triceps\nTue — Back + Biceps\nWed — Legs\nThu — REST\nFri — Shoulders + Traps\nSat — Arms + Core\nSun — REST',
-  'supplement':'Core stack: Creatine monohydrate (5g daily), Whey protein (post-workout), Vitamin D3 (2000IU), Omega-3 (1g daily). Optional: Caffeine pre-workout. Keep it simple.',
-  'sleep':'Sleep is your biggest anabolic. Aim for 7–9 hours. Growth hormone peaks at 10pm–2am. Poor sleep = poor gains, higher cortisol, more fat storage.',
-  'recovery':'Recovery protocol: sleep 8h, 3L water/day, protein every meal, light walk on rest days, foam roll tight muscles. Sauna 2x/week if available.',
-};
-function getResp(msg){
-  const m=msg.toLowerCase();
-  for(const[k,v]of Object.entries(DB_AIR)){if(m.includes(k))return v;}
-  const fb=['Progressive overload is your biggest tool. Add 2.5kg when you hit the top rep range for 2 consecutive sessions.','Consistency is the only secret. Show up 4–5 days/week for 6 months and the transformation is inevitable.','Mind-muscle connection matters. Slow down, feel every rep. Quality reps beat sloppy volume every time.','Your weakest link is probably nutrition. Track protein for 2 weeks — most people are eating half what they need.','Deload every 4–6 weeks. One lighter week = more progress in the next 6 weeks than grinding non-stop.'];
-  return fb[Math.floor(Math.random()*fb.length)];
+
+// ══ REAL AI COACH — GEMINI ══
+const GEMINI_KEY = 'AIzaSyDSDJ_HUuwycrkrS59r1RGL478kp9glMt8';
+let chatHistory = [];
+
+async function askGemini(userMsg, bodyId) {
+  // Build personalised system context from user profile
+  const fname = userProfile?.first_name || 'Athlete';
+  const goal = userProfile?.goal || 'muscle_gain';
+  const weight = userProfile?.weight || null;
+  const height = userProfile?.height || null;
+  const level = userProfile?.experience_level || 'intermediate';
+  const days = userProfile?.days_per_week || 4;
+  const goalMap = {muscle_gain:'build muscle',fat_loss:'lose fat',strength:'get stronger',endurance:'build endurance',general:'stay fit'};
+
+  const systemPrompt = `You are GRYNDEX AI Coach — an elite personal gym coach and nutritionist for Indian athletes.
+
+User profile:
+- Name: ${fname}
+- Goal: ${goalMap[goal]||goal}
+- Weight: ${weight?weight+'kg':'not set'}
+- Height: ${height?height+'cm':'not set'}
+- Experience: ${level}
+- Training days/week: ${days}
+
+Rules:
+1. Always address the user by name (${fname}) naturally
+2. Give specific, actionable gym and nutrition advice
+3. Focus on Indian context — Indian foods, Indian gyms
+4. Be motivating but real — no fluff
+5. Keep responses concise — 2-4 sentences max unless a plan is requested
+6. If they say hello/hi, greet them warmly by name and ask what they need help with today`;
+
+  // Add to history
+  chatHistory.push({role:'user', parts:[{text:userMsg}]});
+
+  // Keep history to last 10 messages
+  if(chatHistory.length > 10) chatHistory = chatHistory.slice(-10);
+
+  const ty = addTyping(bodyId);
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,
+      {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          system_instruction:{parts:[{text:systemPrompt}]},
+          contents: chatHistory,
+          generationConfig:{maxOutputTokens:300, temperature:0.8}
+        })
+      }
+    );
+    const data = await res.json();
+    const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "I'm having trouble connecting right now. Try again in a moment!";
+    chatHistory.push({role:'model', parts:[{text:reply}]});
+    ty.remove();
+    addBub(bodyId, reply, 'ai');
+  } catch(e) {
+    ty.remove();
+    addBub(bodyId, "Connection issue. Check your internet and try again!", 'ai');
+  }
 }
+
 function addBub(bodyId,text,type){
   const cb=document.getElementById(bodyId);if(!cb)return;
   const d=document.createElement('div');d.className='cbub '+type;d.textContent=text;
@@ -2224,14 +2273,13 @@ function sendChat(bodyId,inpId){
   const inp=document.getElementById(inpId);
   const msg=inp?inp.value.trim():'';if(!msg)return;
   addBub(bodyId,msg,'me');if(inp)inp.value='';
-  const ty=addTyping(bodyId);
-  setTimeout(()=>{ty.remove();addBub(bodyId,getResp(msg),'ai');},700+Math.random()*500);
+  askGemini(msg, bodyId);
 }
 function quickAsk(text,bodyId){
   addBub(bodyId,text,'me');
-  const ty=addTyping(bodyId);
-  setTimeout(()=>{ty.remove();addBub(bodyId,getResp(text),'ai');},700);
+  askGemini(text, bodyId);
 }
+
 document.getElementById('homeInp')?.addEventListener('keydown',e=>{if(e.key==='Enter')sendChat('homeChatBody','homeInp');});
 document.getElementById('coachInp')?.addEventListener('keydown',e=>{if(e.key==='Enter')sendChat('coachChatBody','coachInp');});
 
