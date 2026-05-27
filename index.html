@@ -1301,39 +1301,10 @@ async function socialAuth(provider){
     showMsg(activePanel,'Google sign-in failed. Try email.','err');
   }
 }
-function doLogin(){
-  const email=document.getElementById('loginEmail').value.trim();
-  const pw=document.getElementById('loginPw').value;
-  if(!email||!email.includes('@')){showMsg('loginMsg','Enter a valid email address','err');return;}
-  if(pw.length<6){showMsg('loginMsg','Password must be at least 6 characters','err');return;}
-  const btn=document.querySelector('#loginPanel .auth-submit');
-  btn.textContent='Logging in...';btn.style.opacity='.7';btn.disabled=true;
-  setTimeout(()=>{
-    btn.textContent='Log In to GRYNDEX';btn.style.opacity='1';btn.disabled=false;
-    showMsg('loginMsg','Welcome back! Redirecting to your dashboard...','ok');
-    setTimeout(closeAuth,1800);
-  },1300);
-}
-function doRegister(){
-  const first=document.getElementById('regFirst').value.trim();
-  const last=document.getElementById('regLast').value.trim();
-  const email=document.getElementById('regEmail').value.trim();
-  const pw=document.getElementById('regPw').value;
-  const pw2=document.getElementById('regPw2').value;
-  const agreed=document.getElementById('agreeCheck').checked;
-  if(!first||!last){showMsg('registerMsg','Enter your full name','err');return;}
-  if(!email||!email.includes('@')){showMsg('registerMsg','Enter a valid email address','err');return;}
-  if(pw.length<8){showMsg('registerMsg','Password must be at least 8 characters','err');return;}
-  if(pw!==pw2){showMsg('registerMsg','Passwords do not match','err');return;}
-  if(!agreed){showMsg('registerMsg','Please agree to the Terms & Privacy Policy','err');return;}
-  const btn=document.querySelector('#registerPanel .auth-submit');
-  btn.textContent='Creating your account...';btn.style.opacity='.7';btn.disabled=true;
-  setTimeout(()=>{
-    btn.textContent='Create My GRYNDEX Account';btn.style.opacity='1';btn.disabled=false;
-    showMsg('registerMsg','Account created! Welcome to GRYNDEX, '+first+'!','ok');
-    setTimeout(closeAuth,2000);
-  },1500);
-}
+// Auth handled by dashboard script below
+function doLogin(){_doLogin();}
+function doRegister(){_doRegister();}
+
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
     document.querySelectorAll('.modal.show,.auth-modal.show').forEach(m=>m.classList.remove('show'));
@@ -2028,18 +1999,23 @@ async function loadProfile(user){
   }
 }
 async function doLogout(){await sb.auth.signOut();hideDashboard();}
-async function doLogin(){
+async function _doLogin(){
   const email=document.getElementById('loginEmail').value.trim();
   const pw=document.getElementById('loginPw').value;
-  if(!email.includes('@')){showMsg('loginMsg','Enter a valid email','err');return;}
-  if(pw.length<6){showMsg('loginMsg','Password too short','err');return;}
+  if(!email.includes('@')){showMsg('loginMsg','Enter a valid email address','err');return;}
+  if(pw.length<6){showMsg('loginMsg','Password must be at least 6 characters','err');return;}
   const btn=document.querySelector('#loginPanel .auth-submit');
   btn.textContent='Logging in...';btn.disabled=true;btn.style.opacity='.7';
-  const{error}=await sb.auth.signInWithPassword({email,password:pw});
+  const{data,error}=await sb.auth.signInWithPassword({email,password:pw});
   btn.textContent='Log In to GRYNDEX';btn.disabled=false;btn.style.opacity='1';
   if(error){showMsg('loginMsg',error.message,'err');return;}
+  if(data?.user){
+    currentUser=data.user;
+    showMsg('loginMsg','Welcome back! Opening dashboard...','ok');
+    setTimeout(()=>showDashboard(currentUser),600);
+  }
 }
-async function doRegister(){
+async function _doRegister(){
   const first=document.getElementById('regFirst').value.trim();
   const last=document.getElementById('regLast').value.trim();
   const email=document.getElementById('regEmail').value.trim();
@@ -2047,15 +2023,23 @@ async function doRegister(){
   const pw2=document.getElementById('regPw2').value;
   const agreed=document.getElementById('agreeCheck').checked;
   if(!first||!last){showMsg('registerMsg','Enter your full name','err');return;}
-  if(!email.includes('@')){showMsg('registerMsg','Enter a valid email','err');return;}
+  if(!email.includes('@')){showMsg('registerMsg','Enter a valid email address','err');return;}
   if(pw.length<8){showMsg('registerMsg','Password must be 8+ characters','err');return;}
   if(pw!==pw2){showMsg('registerMsg','Passwords do not match','err');return;}
   if(!agreed){showMsg('registerMsg','Please agree to Terms','err');return;}
   const btn=document.querySelector('#registerPanel .auth-submit');
   btn.textContent='Creating...';btn.disabled=true;btn.style.opacity='.7';
-  const{error}=await sb.auth.signUp({email,password:pw,options:{data:{first_name:first,last_name:last}}});
+  const{data,error}=await sb.auth.signUp({
+    email,password:pw,
+    options:{data:{first_name:first,last_name:last}}
+  });
   btn.textContent='Create My GRYNDEX Account';btn.disabled=false;btn.style.opacity='1';
   if(error){showMsg('registerMsg',error.message,'err');return;}
+  if(data?.user){
+    currentUser=data.user;
+    showMsg('registerMsg','Account created! Welcome to GRYNDEX, '+first+'!','ok');
+    setTimeout(()=>showDashboard(currentUser),800);
+  }
 }
 async function saveProfile(){
   if(!currentUser)return;
